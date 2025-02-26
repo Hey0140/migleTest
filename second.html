@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Second Page</title>
+    <style>
+        body {
+            background: black;
+            color: #0F0; /* 매트릭스 느낌의 초록색 */
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #message {
+            opacity: 0;
+            font-size: 24px;
+            transition: opacity 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<div id="message">F123-232의 생존 시나리오 3개 확인</div>
+
+<script>
+    const message = document.getElementById("message");
+
+    // 0.5초 후 페이드 인 시작
+    setTimeout(() => {
+        message.style.opacity = 1;
+    }, 500);
+
+    // 3초 후 (페이드 인 완료 + 잠깐 유지) → 페이드 아웃
+    setTimeout(() => {
+        message.style.opacity = 0;
+    }, 3000);
+
+    // 5초 후 (페이드 아웃 완료) → third.html로 이동
+    setTimeout(() => {
+        window.location.href = "third.html";
+    }, 5000);
+</script>
+</body>
+</html>
