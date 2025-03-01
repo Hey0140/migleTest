@@ -43,6 +43,37 @@
 <div class="text-container" id="textContainer"></div>
 
 <script>
+  /* ===== 사운드 재생 관련 코드 ===== */
+  let audio = new Audio("sound1.mp3"); // 파일 경로에 맞춰 수정
+  audio.volume = 1.0;      // 초기 볼륨
+  audio.loop = true;       // 매트릭스 효과 동안 반복 재생
+  audio.play().catch(err => {
+    // 자동재생이 막힐 수 있으므로 예외 처리
+    console.log("Audio play error:", err);
+  });
+
+  // 오디오 페이드 아웃 함수 (duration ms 동안 서서히 볼륨 0까지 내린 후 일시정지)
+  function fadeOutAudio(audio, duration = 2000) {
+    const initialVolume = audio.volume;
+    const steps = 20; // 20번에 걸쳐 볼륨 감소
+    const stepTime = duration / steps; // 각 단계당 시간
+    let currentStep = 0;
+
+    let fadeInterval = setInterval(() => {
+      currentStep++;
+      let ratio = currentStep / steps;
+      let newVolume = initialVolume * (1 - ratio);
+      audio.volume = newVolume > 0 ? newVolume : 0;
+
+      if (currentStep >= steps) {
+        clearInterval(fadeInterval);
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = initialVolume; // 다음 재생 대비 볼륨 복구
+      }
+    }, stepTime);
+  }
+
   const canvas = document.getElementById("matrixCanvas");
   const ctx = canvas.getContext("2d");
 
@@ -172,6 +203,7 @@
 
           // 2초 동안 "로드 완료." 상태 유지
           setTimeout(() => {
+            fadeOutAudio(audio, 2000);
             // 블랙아웃 효과: 오버레이를 만들어서 fade in 처리
             let overlay = document.createElement("div");
             overlay.id = "blackoutOverlay";
