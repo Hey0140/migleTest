@@ -91,7 +91,7 @@
     setTimeout(() => {
       showTextEffect();
     }, 1500);
-  }, 2000);
+  }, 4000);
 
   function showTextEffect() {
     const textContainer = document.getElementById("textContainer");
@@ -116,7 +116,12 @@
             "물체 정보: 유기체.\n" +
             "생존 기간: "; // 실시간 증가하는 부분
 
-    let dnaSequence = "DNA 염기 서열:\nATGCGTACGTTAGCCTAGGCTTACGGAATCCGATGCTAGGCTTGA...\n\n로드 완료.";
+    let dnaSequence = "DNA 염기 서열:\n" +
+            "ATGCGTACGTTAGCCTAGGCTTACGGAATCCGATGCTAGGCTTGA\n" +
+            "TAGGTGATATTAAACCGAGCTGCTGTGCGTATCAGCGGCCGTTAG\n" +
+            "ACTGTCGCATATGTGGTGCGTATAGAGCCGAATAGCCTAGTTGTA\n" +
+            "GTGAGGGTTGGCTGTTGCTAGCGTATTAAGTTGGGCTTACACCGT\n" +
+            "AGGGTGCGGTACGGGGCGGTAGTTCTTACTTACTTACGGCTTGGA...\n\n로드 완료.";
 
     let index = 0;
     let typingInterval = setInterval(() => {
@@ -138,8 +143,8 @@
     textContainer.appendChild(dnaText);
 
     let targetTime = 13241 * 3600 + 2134 * 60; // 목표값 (초 단위)
-    let updateInterval = 100; // 100ms마다 업데이트
-    let stepIncrease = Math.floor(targetTime / (10000 / updateInterval)); // 10초 내 도달 목표
+    let updateInterval = 400; // 400ms마다 업데이트
+    let stepIncrease = Math.floor(targetTime / (3000 / updateInterval)); // 3초 내 도달 목표
 
     let timerInterval = setInterval(() => {
       elapsedSeconds += stepIncrease;
