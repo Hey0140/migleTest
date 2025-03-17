@@ -1,0 +1,121 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background-color: black;
+  color: white;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+#matrix-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Ensure this is lower than camera-container */
+  opacity: 1;
+  transition: opacity 1s ease-out;
+}
+
+#matrix-background.fade-out {
+  opacity: 0;
+}
+
+#camera-container {
+  position: relative; /* Changed from absolute */
+  z-index: 10; /* Higher z-index to ensure it's above matrix */
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh; /* 뷰포트 높이의 90%로 제한 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#camera-wrapper {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 75%; /* 4:3 aspect ratio */
+  overflow: hidden;
+  max-height: 80vh; /* 뷰포트 높이의 80%로 제한 */
+}
+
+#camera {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror effect */
+  opacity: 0;
+  transition: opacity 1s ease-in;
+}
+
+#camera.active {
+  opacity: 1;
+}
+
+#circle-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at center,
+    transparent 20%,
+    rgba(0, 0, 0, 0.7) 70%
+  );
+  pointer-events: none;
+}
+
+#guide-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 3px dashed white;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+#guide-text {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 24px;
+  text-align: center;
+  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px 20px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+#status-message {
+  margin-top: 20px;
+  font-size: 24px;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+#status-message.active {
+  opacity: 1;
+}

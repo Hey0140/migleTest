@@ -1,244 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matrix Rain Effect with Typing</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-      font-family: monospace;
-      color: #0F0;
-    }
-    canvas {
-      display: block;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transition: filter 1.5s ease-in-out;
-    }
-    .text-container {
-      display: none;
-      position: absolute;
-      top: 20%;
-      left: 50%;
-      transform: translate(-50%, -20%);
-      text-align: left;
-      font-size: 18px;
-      line-height: 1.8;
-      white-space: pre-line;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 20px;
-      border-radius: 10px;
-      transition: filter 1.5s ease-in-out;
-    }
-  </style>
-</head>
-<body>
-<canvas id="matrixCanvas"></canvas>
-<div class="text-container" id="textContainer"></div>
-
-<script>
-  /* ===== 사운드 재생 관련 코드 ===== */
-  let audio = new Audio("sound1.mp3"); // 파일 경로에 맞춰 수정
-  audio.volume = 1.0;      // 초기 볼륨
-  audio.loop = true;       // 매트릭스 효과 동안 반복 재생
-  audio.play().catch(err => {
-    // 자동재생이 막힐 수 있으므로 예외 처리
-    console.log("Audio play error:", err);
-  });
-
-  // 오디오 페이드 아웃 함수 (duration ms 동안 서서히 볼륨 0까지 내린 후 일시정지)
-  function fadeOutAudio(audio, duration = 2000) {
-    const initialVolume = audio.volume;
-    const steps = 20; // 20번에 걸쳐 볼륨 감소
-    const stepTime = duration / steps; // 각 단계당 시간
-    let currentStep = 0;
-
-    let fadeInterval = setInterval(() => {
-      currentStep++;
-      let ratio = currentStep / steps;
-      let newVolume = initialVolume * (1 - ratio);
-      audio.volume = newVolume > 0 ? newVolume : 0;
-
-      if (currentStep >= steps) {
-        clearInterval(fadeInterval);
-        audio.pause();
-        audio.currentTime = 0;
-        audio.volume = initialVolume; // 다음 재생 대비 볼륨 복구
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>미글 프로젝트</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Inline style to ensure immediate application */
+      #camera-container {
+        position: relative;
+        z-index: 10;
       }
-    }, stepTime);
-  }
-
-  const canvas = document.getElementById("matrixCanvas");
-  const ctx = canvas.getContext("2d");
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  const fontSize = 16;
-  const columns = Math.floor(canvas.width / fontSize);
-  let drops = [];
-
-  function initDrops() {
-    drops = Array(columns).fill(0).map(() => Math.floor(Math.random() * canvas.height / fontSize));
-  }
-
-  function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#0F0";
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-      const text = Math.random() > 0.5 ? "0" : "1";
-      const x = i * fontSize;
-      const y = drops[i] * fontSize;
-
-      ctx.fillText(text, x, y);
-
-      if (y > canvas.height && Math.random() > 0.975) {
-        drops[i] = 0;
-      } else {
-        drops[i]++;
+      #camera-wrapper {
+        z-index: 11;
       }
-    }
-  }
-
-  initDrops();
-  const matrixInterval = setInterval(drawMatrix, 50);
-
-  // 2초 후 블러 효과
-  setTimeout(() => {
-    canvas.style.filter = "blur(10px)";
-    clearInterval(matrixInterval);
-
-    // 블러가 끝난 후 1.5초 뒤 텍스트 출력 시작
-    setTimeout(() => {
-      showTextEffect();
-    }, 1500);
-  }, 4000);
-
-  function showTextEffect() {
-    const textContainer = document.getElementById("textContainer");
-    textContainer.style.display = "block";
-    setTimeout(() => {
-      textContainer.style.filter = "blur(0px)";
-      typeText();
-    }, 500);
-  }
-
-  let elapsedSeconds = 0;
-  function formatTime(seconds) {
-    let hours = Math.floor(seconds / 3600);
-    let minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}min`;
-  }
-
-  function typeText() {
-    const textContainer = document.getElementById("textContainer");
-    const text =
-            "고유 식별코드: F123-232\n" +
-            "물체 정보: 유기체.\n" +
-            "생존 기간: "; // 실시간 증가하는 부분
-
-    let dnaSequence = "DNA 염기 서열:\n" +
-            "ATGCGTACGTTAGCCTAGGCTTACGGAATCCGATGCTAGGCTTGA\n" +
-            "TAGGTGATATTAAACCGAGCTGCTGTGCGTATCAGCGGCCGTTAG\n" +
-            "ACTGTCGCATATGTGGTGCGTATAGAGCCGAATAGCCTAGTTGTA\n" +
-            "GTGAGGGTTGGCTGTTGCTAGCGTATTAAGTTGGGCTTACACCGT\n" +
-            "AGGGTGCGGTACGGGGCGGTAGTTCTTACTTACTTACGGCTTGGA...\n\n로드 완료.";
-
-    let index = 0;
-    let typingInterval = setInterval(() => {
-      if (index < text.length) {
-        textContainer.innerHTML += text[index];
-        index++;
-      } else {
-        clearInterval(typingInterval);
-        startLiveTimer(dnaSequence);
+      #camera.active {
+        opacity: 1 !important;
       }
-    }, 50);
-  }
+    </style>
+  </head>
+  <body>
+    <div id="matrix-background" class="active"></div>
 
-  function startLiveTimer(dnaSequence) {
-    const textContainer = document.getElementById("textContainer");
-    let timerElement = document.createElement("span");
-    textContainer.appendChild(timerElement);
-    let dnaText = document.createElement("div");
-    textContainer.appendChild(dnaText);
+    <div id="camera-container">
+      <div id="camera-wrapper">
+        <video id="camera" autoplay playsinline muted></video>
+        <div id="circle-mask"></div>
+        <div id="guide-circle"></div>
+        <div id="guide-text">얼굴을 점선 안에 위치해주세요.</div>
+      </div>
+      <div id="status-message"></div>
+    </div>
 
-    let targetTime = 13241 * 3600 + 2134 * 60; // 목표값 (초 단위)
-    let updateInterval = 400; // 400ms마다 업데이트
-    let stepIncrease = Math.floor(targetTime / (3000 / updateInterval)); // 3초 내 도달 목표
-
-    let timerInterval = setInterval(() => {
-      elapsedSeconds += stepIncrease;
-      timerElement.innerText = formatTime(elapsedSeconds);
-
-      // 텍스트 흔들림 효과
-      //textContainer.style.transform = `translate(-50%, -20%) translateX(${Math.sin(elapsedSeconds / 200) * 5}px)`;
-
-      if (elapsedSeconds >= targetTime) {
-        clearInterval(timerInterval);
-        //textContainer.style.transform = "translate(-50%, -20%)"; // 정상 복구
-      }
-    }, updateInterval);
-
-    // DNA 시퀀스 출력 후 블랙아웃 + 화면 이동
-    // DNA 시퀀스 출력 후 블랙아웃 + 화면 이동 (fade 효과 적용)
-    setTimeout(() => {
-      let dnaIndex = 0;
-      let dnaTyping = setInterval(() => {
-        if (dnaIndex < dnaSequence.length) {
-          dnaText.innerHTML += dnaSequence[dnaIndex];
-          dnaIndex++;
-        } else {
-          clearInterval(dnaTyping);
-
-          // 2초 동안 "로드 완료." 상태 유지
-          setTimeout(() => {
-            fadeOutAudio(audio, 2000);
-            // 블랙아웃 효과: 오버레이를 만들어서 fade in 처리
-            let overlay = document.createElement("div");
-            overlay.id = "blackoutOverlay";
-            overlay.style.position = "fixed";
-            overlay.style.top = "0";
-            overlay.style.left = "0";
-            overlay.style.width = "100vw";
-            overlay.style.height = "100vh";
-            overlay.style.backgroundColor = "black";
-            overlay.style.opacity = "0";
-            overlay.style.transition = "opacity 1s ease-in-out";
-            document.body.appendChild(overlay);
-
-            // 강제로 reflow를 발생시켜 transition이 적용되도록 함
-            window.getComputedStyle(overlay).opacity;
-            overlay.style.opacity = "1";
-
-            // fade in 완료 후 1초 뒤 페이지 이동
-            setTimeout(() => {
-              window.location.href = "second.html";
-            }, 1000);
-
-          }, 2000); // "로드 완료." 출력 후 2초 대기
-        }
-      }, 10);
-    }, 1000);
-
-
-  }
-
-  window.addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    initDrops();
-  });
-</script>
-</body>
+    <script src="matrix.js"></script>
+    <script src="camera.js"></script>
+    <script>
+      // Ensure camera stays visible
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          const camera = document.getElementById('camera');
+          if (!camera.classList.contains('active')) {
+            camera.classList.add('active');
+            console.log('Camera activated by window load');
+          }
+        }, 1500);
+      });
+    </script>
+  </body>
 </html>
