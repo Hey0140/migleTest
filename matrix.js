@@ -3,11 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctx = canvas.getContext('2d');
   const matrixBackground = document.getElementById('matrix-background');
 
-  // Set canvas styles to ensure it's behind other elements
-  canvas.style.position = 'absolute';
+  // Set canvas styles to ensure it's behind other elements but fills screen
+  canvas.style.position = 'fixed'; // Changed from absolute to fixed
   canvas.style.top = '0';
   canvas.style.left = '0';
-  canvas.style.zIndex = '0'; // Ensure canvas is at the lowest z-index
+  canvas.style.width = '100vw'; // Ensure full width
+  canvas.style.height = '100vh'; // Ensure full height
+  canvas.style.zIndex = '0'; // Keep at lowest z-index
 
   matrixBackground.appendChild(canvas);
 

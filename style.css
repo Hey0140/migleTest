@@ -37,8 +37,8 @@ body {
 #camera-container {
   position: relative; /* Changed from absolute */
   z-index: 10; /* Higher z-index to ensure it's above matrix */
-  width: 100%;
-  max-width: 800px;
+  width: 85%; /* Reduced from 100% to make it 15% smaller */
+  max-width: 680px; /* Reduced from 800px */
   max-height: 90vh; /* 뷰포트 높이의 90%로 제한 */
   display: flex;
   flex-direction: column;
@@ -52,6 +52,7 @@ body {
   padding-bottom: 75%; /* 4:3 aspect ratio */
   overflow: hidden;
   max-height: 80vh; /* 뷰포트 높이의 80%로 제한 */
+  z-index: 11;
 }
 
 #camera {
@@ -62,24 +63,28 @@ body {
   transform: scaleX(-1); /* Mirror effect */
   opacity: 0;
   transition: opacity 1s ease-in;
+  z-index: 15; /* Lower than guide elements */
+  -webkit-mask-image: radial-gradient(
+    ellipse 40% 60% at center,
+    /* Adjust aspect ratio to be taller than wide */ black 0%,
+    black 20%,
+    transparent 45%
+  );
+  mask-image: radial-gradient(
+    ellipse 40% 60% at center,
+    /* Adjust aspect ratio to be taller than wide */ black 0%,
+    black 20%,
+    transparent 45%
+  );
 }
 
 #camera.active {
   opacity: 1;
 }
 
+/* Remove or modify the circle-mask to be fully transparent outside */
 #circle-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(
-    circle at center,
-    transparent 20%,
-    rgba(0, 0, 0, 0.7) 70%
-  );
-  pointer-events: none;
+  display: none; /* Hide this element as we're using the CSS masking */
 }
 
 #guide-circle {
@@ -87,29 +92,33 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
+  width: 140px; /* Make narrower */
+  height: 200px; /* Keep height the same */
   border: 3px dashed white;
   border-radius: 50%;
   pointer-events: none;
+  z-index: 30; /* Increased to ensure it's on top */
 }
 
 #guide-text {
   position: absolute;
-  bottom: 20%;
+  bottom: 30%; /* Moved up from 20% */
   left: 50%;
   transform: translateX(-50%);
   color: white;
-  font-size: 24px;
+  font-size: 28px; /* Increased from 24px */
   text-align: center;
   font-weight: bold;
   background-color: rgba(0, 0, 0, 0.5);
   padding: 10px 20px;
   border-radius: 5px;
   white-space: nowrap;
+  z-index: 30; /* Increased to ensure it's on top */
 }
 
 #status-message {
+  position: relative; /* Add position relative */
+  z-index: 20; /* Higher z-index so it appears above matrix */
   margin-top: 20px;
   font-size: 24px;
   opacity: 0;
