@@ -41,21 +41,39 @@ document.addEventListener('DOMContentLoaded', () => {
     SECTIONS.forEach((id) => {
       const section = document.getElementById(id);
       section.classList.remove('active');
-      // Force apply styles to ensure it's hidden
+      section.style.display = 'none';
       section.style.opacity = '0';
       section.style.visibility = 'hidden';
-      debug(`Deactivated section: ${id}`);
     });
 
     // Then activate the requested section
     const section = document.getElementById(sectionId);
     section.classList.add('active');
-    // Force apply styles to ensure it's visible
+
+    // Force apply styles to ensure it's visible and centered
+    section.style.display = 'flex';
     section.style.opacity = '1';
     section.style.visibility = 'visible';
-    debug(
-      `Section ${sectionId} visible status: ${getComputedStyle(section).visibility}, opacity: ${getComputedStyle(section).opacity}, z-index: ${getComputedStyle(section).zIndex}`,
-    );
+    section.style.zIndex = '30';
+    section.style.position = 'absolute';
+    section.style.top = '0';
+    section.style.bottom = '0';
+    section.style.left = '0';
+    section.style.right = '0';
+    section.style.margin = 'auto'; // Center vertically and horizontally
+    section.style.justifyContent = 'center'; // Center contents vertically
+
+    // Special handling for details-text alignment
+    if (sectionId === 'details-text') {
+      section.style.alignItems = 'flex-start'; // Left-align text
+    } else {
+      section.style.alignItems = 'center'; // Center horizontally
+    }
+
+    // Ensure centered within wrapper
+    section.style.justifyContent = 'center';
+
+    debug(`Activated section: ${sectionId}`);
 
     // Handle specific section initialization
     switch (sectionId) {
@@ -226,10 +244,32 @@ document.addEventListener('DOMContentLoaded', () => {
       cameraContainer.style.position = 'absolute';
       cameraContainer.style.zIndex = '-1';
 
-      // Ensure content container is above matrix
+      // Ensure content container and wrapper are visible and centered
       const contentContainer = document.querySelector('.content-container');
       contentContainer.style.zIndex = '10';
       contentContainer.style.position = 'fixed';
+      contentContainer.style.display = 'flex';
+      contentContainer.style.justifyContent = 'center';
+      contentContainer.style.alignItems = 'center';
+      contentContainer.style.height = '100%'; // Ensure full height
+      contentContainer.style.width = '100%'; // Ensure full width
+
+      // Explicitly set content wrapper position and size
+      const contentWrapper = document.getElementById('content-wrapper');
+      if (contentWrapper) {
+        contentWrapper.style.position = 'absolute';
+        contentWrapper.style.display = 'flex';
+        contentWrapper.style.flexDirection = 'column';
+        contentWrapper.style.justifyContent = 'center'; // Critical for vertical centering
+        contentWrapper.style.alignItems = 'center';
+        contentWrapper.style.height = '100%'; // Ensure full height
+        contentWrapper.style.width = '100%'; // Ensure full width
+        contentWrapper.style.top = '0';
+        contentWrapper.style.bottom = '0';
+        contentWrapper.style.margin = 'auto 0'; // Center vertically
+        debug('Content wrapper positioned for vertical centering');
+      }
+
       debug(
         `Content container z-index: ${getComputedStyle(contentContainer).zIndex}`,
       );

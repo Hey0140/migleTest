@@ -150,8 +150,32 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 10; /* Higher than matrix (1) */
-  pointer-events: none; /* Don't block clicks by default */
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* This ensures vertical centering */
+  pointer-events: none;
+}
+
+/* Content wrapper with explicit vertical centering */
+#content-wrapper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Critical for vertical centering */
+  align-items: center;
+  z-index: 20;
+
+  /* Ensure it takes up the full height */
+  top: 0;
+  bottom: 0;
+  margin: auto 0; /* Important for vertical centering */
+
+  /* Debug outline */
+  /* border: 1px solid red; */
 }
 
 /* Background */
@@ -171,31 +195,29 @@ body {
   opacity: 0.3;
 }
 
-/* Content sections inside layer 3 - ensure they're completely hidden and centered */
+/* Content sections with proper positioning */
 .content-section {
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto; /* Critical for vertical and horizontal centering */
+
   width: 100%;
   height: 100%;
-  display: none; /* Start with display none */
+
+  /* Center contents vertically */
+  display: none;
   flex-direction: column;
+  justify-content: center; /* Critical for vertical centering */
   align-items: center;
-  justify-content: center; /* Vertical center */
+
+  /* Other properties */
   opacity: 0;
   visibility: hidden;
-  z-index: -10;
-  transition:
-    opacity 0.5s ease,
-    visibility 0.5s ease;
-  background-color: rgba(0, 0, 0, 0.6);
   pointer-events: none;
-
-  /* Stronger centering to override any potential conflicts */
-  display: none;
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+  z-index: -10;
 }
 
 /* Active section */
@@ -209,25 +231,48 @@ body {
 
 /* Typing Text Section - centered */
 #typing-text {
+  display: none;
+  text-align: center;
+  width: 100%;
+  max-height: 300px; /* Limit maximum height */
+  margin: auto; /* Center vertically and horizontally */
+  padding: 20px;
   font-size: 2rem;
   color: #00ff00;
   text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
-  /* Ensure no padding pushes content down */
+  /* Center the content */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 100%;
   padding: 0;
   margin: 0;
 }
 
 /* Details Text Section - needs special handling for alignment */
 #details-text {
+  display: none;
+  text-align: left;
+  width: 80%;
+  max-width: 600px;
+  max-height: 70vh;
+  margin: auto; /* For vertical centering */
+  align-self: center;
+  padding: 20px;
   font-family: monospace;
   text-align: left;
   width: 80%;
   max-width: 600px;
+  margin: 0 auto; /* Horizontal centering */
+
   /* Center the actual content rather than the container */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 60vh; /* Use viewport height to ensure vertical centering */
+  align-items: flex-start; /* Left align text but center the container */
+  min-height: 100%; /* Use full height */
 }
 
 #details-text p {
@@ -252,11 +297,13 @@ body {
 #scenario-section {
   text-align: center;
   padding: 0;
-  /* Center the content vertically */
+  /* Center the content vertically and horizontally */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 100%;
+  width: 100%;
 }
 
 #scenario-text {
@@ -292,6 +339,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 0;
+  height: 100%;
 }
 
 #question-text {
@@ -329,6 +377,7 @@ body {
   align-items: center;
   text-align: center;
   padding: 0;
+  height: 100%;
 }
 
 /* Animation Elements */
