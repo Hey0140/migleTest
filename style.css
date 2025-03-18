@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -7,7 +9,7 @@
 body {
   font-family: 'Noto Sans KR', sans-serif;
   background-color: black;
-  color: white;
+  color: #00ff00;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
@@ -19,24 +21,36 @@ body {
   left: 0;
 }
 
+/* LAYER SYSTEM: Clearly defined z-index hierarchy */
+#matrix-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1; /* Lower than content */
+  pointer-events: none; /* Don't interfere with clicks */
+}
+
 #matrix-background {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* Ensure this is lower than camera-container */
+  z-index: 1; /* Ensure this is lower than content but visible */
   opacity: 1;
-  transition: opacity 1s ease-out;
+  transition: opacity 2s ease;
 }
 
 #matrix-background.fade-out {
-  opacity: 0;
+  opacity: 0.2; /* Increased from 0.1 to keep it subtly visible */
 }
 
+/* Camera container on layer 2 */
 #camera-container {
-  position: relative; /* Changed from absolute */
-  z-index: 10; /* Higher z-index to ensure it's above matrix */
+  position: fixed; /* Changed to fixed to be part of layer system */
+  z-index: 20; /* Above matrix, below content when activated */
   width: 85%; /* Reduced from 100% to make it 15% smaller */
   max-width: 680px; /* Reduced from 800px */
   max-height: 90vh; /* 뷰포트 높이의 90%로 제한 */
@@ -127,4 +141,224 @@ body {
 
 #status-message.active {
   opacity: 1;
+}
+
+/* Content container on layer 3 */
+.content-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10; /* Higher than matrix (1) */
+  pointer-events: none; /* Don't block clicks by default */
+}
+
+/* Background */
+#background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  opacity: 1;
+  z-index: 0;
+  transition: opacity 2s ease;
+}
+
+#background.fadeout {
+  opacity: 0.3;
+}
+
+/* Content sections inside layer 3 - ensure they're completely hidden and centered */
+.content-section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none; /* Start with display none */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Vertical center */
+  opacity: 0;
+  visibility: hidden;
+  z-index: -10;
+  transition:
+    opacity 0.5s ease,
+    visibility 0.5s ease;
+  background-color: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+
+  /* Stronger centering to override any potential conflicts */
+  display: none;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+/* Active section */
+.content-section.active {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 30 !important;
+  pointer-events: all !important;
+}
+
+/* Typing Text Section - centered */
+#typing-text {
+  font-size: 2rem;
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+  /* Ensure no padding pushes content down */
+  padding: 0;
+  margin: 0;
+}
+
+/* Details Text Section - needs special handling for alignment */
+#details-text {
+  font-family: monospace;
+  text-align: left;
+  width: 80%;
+  max-width: 600px;
+  /* Center the actual content rather than the container */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 60vh; /* Use viewport height to ensure vertical centering */
+}
+
+#details-text p {
+  opacity: 0;
+  margin-bottom: 0.8rem;
+  transform: translateY(10px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+}
+
+#details-text p.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#survival-time {
+  display: inline-block;
+}
+
+/* Scenario Section - ensure content is centered */
+#scenario-section {
+  text-align: center;
+  padding: 0;
+  /* Center the content vertically */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#scenario-text {
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+}
+
+#video-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  width: 80%;
+  max-width: 800px;
+}
+
+.video-preview {
+  width: 30%;
+  overflow: hidden;
+  border: 1px solid #00ff00;
+}
+
+.video-preview video {
+  width: 100%;
+  height: auto;
+}
+
+/* Overlay Section - ensure content is centered */
+#overlay {
+  background-color: rgba(0, 0, 0, 0.85);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+#question-text {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+#play-button {
+  padding: 10px 30px;
+  font-size: 1.2rem;
+  background-color: transparent;
+  color: #00ff00;
+  border: 2px solid #00ff00;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#play-button:hover:not([disabled]) {
+  background-color: rgba(0, 255, 0, 0.2);
+}
+
+#play-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Final Message Section - centered */
+#final-message {
+  background-color: rgba(0, 0, 0, 0.95);
+  font-size: 1.5rem;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0;
+}
+
+/* Animation Elements */
+.typing-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1.2em;
+  background-color: #00ff00;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Debug overlay - always on top */
+#debug-overlay {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px;
+  font-size: 12px;
+  z-index: 9999;
 }

@@ -56,8 +56,16 @@ document.addEventListener('DOMContentLoaded', () => {
     guideCircle.style.display = 'none';
     guideText.style.display = 'none';
 
-    // 배경 페이드 아웃
-    matrixBackground.classList.add('fade-out');
+    // Dim matrix but keep it running - use the new public method
+    if (window.dimMatrix) {
+      window.dimMatrix(0.2); // Pass opacity level (0.2 = 20% visible)
+    } else {
+      // Fallback if function not available
+      matrixBackground.classList.add('fade-out');
+    }
+
+    // Call the face recognition complete function
+    onFaceRecognitionComplete();
   };
 
   // 키보드 이벤트 리스너
@@ -88,4 +96,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, 1000);
   });
+
+  // This function should be called when face recognition is successful
+  function onFaceRecognitionComplete() {
+    // Update status message
+    const statusMessage = document.getElementById('status-message');
+    statusMessage.textContent = '인식 완료! 잠시만 기다려주세요...';
+
+    // Wait a moment for the user to see the completion message
+    setTimeout(() => {
+      // Call the main flow function from script.js
+      if (typeof window.startFlowAfterRecognition === 'function') {
+        // Make sure other containers are visible
+        const container = document.querySelector('.container');
+        if (container) {
+          container.style.visibility = 'visible';
+          container.style.display = 'flex';
+          container.style.zIndex = '5';
+          console.log('Container visibility enforced');
+        }
+
+        window.startFlowAfterRecognition();
+      } else {
+        console.error('startFlowAfterRecognition function not found');
+      }
+    }, 1500);
+  }
 });

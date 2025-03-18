@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>미글 프로젝트</title>
+    <title>Interactive Exhibition</title>
     <link rel="stylesheet" href="style.css" />
     <style>
       /* Inline style to ensure immediate application */
@@ -83,11 +83,63 @@
       #matrix-background {
         z-index: 1 !important;
       }
+      /* Add this to ensure content sections are more visible */
+      .content-section {
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.6
+        ); /* Semi-transparent black background */
+      }
+
+      .content-section.active {
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+
+      /* Ensure matrix is behind content */
+      #matrix-container {
+        z-index: 1 !important;
+      }
+
+      /* Fix z-index for content container */
+      .content-container {
+        z-index: 10 !important;
+      }
+
+      /* Debug styles */
+      #debug-overlay {
+        background: rgba(0, 0, 0, 0.8) !important;
+        color: #ff0 !important;
+        z-index: 10000 !important;
+      }
+
+      /* Ensure content sections are completely hidden initially */
+      .content-section {
+        display: none !important; /* Force hide initially */
+        visibility: hidden !important;
+        opacity: 0 !important;
+        z-index: -10 !important; /* Keep below all other elements */
+      }
+
+      /* Only show when explicitly activated */
+      .content-section.active {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 30 !important;
+      }
     </style>
   </head>
   <body>
-    <div id="matrix-background" class="active"></div>
+    <!-- Separated page structure into clear layers -->
+    <!-- Layer 1: Matrix background - always visible -->
+    <div id="matrix-container">
+      <div id="matrix-background" class="active"></div>
+    </div>
 
+    <!-- Layer 2: Camera UI - visible during face detection -->
     <div id="camera-container">
       <div id="camera-wrapper">
         <video id="camera" autoplay playsinline muted></video>
@@ -96,6 +148,76 @@
         <div id="status-message"></div>
       </div>
     </div>
+
+    <!-- Layer 3: Content sections - visible after face detection -->
+    <div class="content-container">
+      <!-- Background layer -->
+      <div id="background" class="active"></div>
+
+      <!-- Content sections - each section is a full screen element -->
+      <section id="typing-text" class="content-section"></section>
+
+      <section id="details-text" class="content-section">
+        <p id="code-line">고유 식별코드: F123-232</p>
+        <p id="object-line">물체 정보: 유기체.</p>
+        <p id="survival-line">
+          생존 기간: <span id="survival-time">13241h 2134min</span>
+        </p>
+        <p id="dna-line">DNA 염기 서열:</p>
+        <p id="dna-sequence">
+          ATGCGTACGTTAGCCTAGGCTTACGGAATCCGATGCTAGGCTTGA...
+        </p>
+        <p id="load-line">로드 완료.</p>
+      </section>
+
+      <section id="scenario-section" class="content-section">
+        <p id="scenario-text">F123-232의 생존 시나리오 3개 확인</p>
+        <div id="video-container">
+          <div class="video-preview">
+            <video muted loop>
+              <source src="videos/scenario1.mp4" type="video/mp4" />
+            </video>
+          </div>
+          <div class="video-preview">
+            <video muted loop>
+              <source src="videos/scenario2.mp4" type="video/mp4" />
+            </video>
+          </div>
+          <div class="video-preview">
+            <video muted loop>
+              <source src="videos/scenario3.mp4" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+      </section>
+
+      <section id="overlay" class="content-section">
+        <p id="question-text">
+          정말 또 다른 당신의 삶을 확인하실건가요?<br />
+          두려울수도, 재밌을수도, 아무렇지 않을 수도 있습니다.
+        </p>
+        <button id="play-button" disabled>재생</button>
+      </section>
+
+      <section id="final-message" class="content-section">
+        <p>잠시후 준비가 완료되면 전시 공간 안으로 진입해주세요.</p>
+      </section>
+    </div>
+
+    <!-- Debug overlay -->
+    <div
+      id="debug-overlay"
+      style="
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px;
+        font-size: 12px;
+        z-index: 9999;
+      "
+    ></div>
 
     <script src="matrix.js"></script>
     <script src="camera.js"></script>
@@ -143,5 +265,6 @@
         });
       });
     </script>
+    <script src="script.js"></script>
   </body>
 </html>
