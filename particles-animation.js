@@ -10,12 +10,25 @@ class ParticlesAnimation extends AnimationInterface {
     this.animationFrame = null;
 
     // Animation settings
-    this.particleCount = 80;
-    this.particleColor = 'rgba(0, 150, 255, 0.8)';
-    this.lineColor = 'rgba(0, 150, 255, 0.15)';
+    this.particleCount = 150; // Increased for more visual density
+    this.particleColor = 'rgba(255, 255, 255, 0.8)'; // Changed to white
+    this.lineColor = 'rgba(255, 255, 255, 0.15)'; // Changed to white
     this.particleSize = 3;
     this.connectionDistance = 150;
     this.speed = 0.5;
+
+    // Neural activity simulation
+    this.synapseLifespan = 60; // Reduced for faster disappearing connections
+    this.synapseFormationRate = 0.03; // Increased for more connections
+    this.fireRate = 0.008; // Slightly increased
+    this.activeConnections = []; // Track current synaptic connections
+    this.burstProbability = 0.002; // Slightly increased
+    this.decayRate = 0.95; // Faster decay rate
+
+    // Depth perception settings
+    this.depthLayers = 5; // Number of depth layers
+    this.maxOpacity = 0.9; // Max opacity for closest particles
+    this.minOpacity = 0.2; // Min opacity for farthest particles
 
     // State flags for animation effects
     this.highlighted = false;
@@ -80,65 +93,285 @@ class ParticlesAnimation extends AnimationInterface {
 
   createParticles() {
     this.particles = [];
+    this.activeConnections = [];
 
     for (let i = 0; i < this.particleCount; i++) {
+      // Assign a depth layer (0 = closest, this.depthLayers-1 = farthest)
+      const depthLayer = Math.floor(Math.random() * this.depthLayers);
+
+      // Calculate opacity based on depth (closer = more opaque)
+      const layerOpacity =
+        this.maxOpacity -
+        ((this.maxOpacity - this.minOpacity) * depthLayer) /
+          (this.depthLayers - 1);
+
+      // Adjust size based on depth (closer = larger)
+      const depthSizeFactor = 1 - (0.4 * depthLayer) / (this.depthLayers - 1);
+
+      // Create particles with more varied properties and depth perception
       this.particles.push({
         x: Math.random() * this.canvas.width,
         y: Math.random() * this.canvas.height,
-        vx: Math.random() * this.speed - this.speed / 2,
-        vy: Math.random() * this.speed - this.speed / 2,
-        size: this.particleSize + Math.random() * 2,
-        color: this.particleColor,
+        vx: (Math.random() - 0.5) * this.speed * (Math.random() + 0.5),
+        vy: (Math.random() - 0.5) * this.speed * (Math.random() + 0.5),
+        size: this.particleSize * (0.7 + Math.random() * 0.8) * depthSizeFactor,
+        color: `rgba(255, 255, 255, ${layerOpacity})`, // White with depth-based opacity
+        firing: false,
+        fireIntensity: 0,
+        lastDirection: Math.random() * Math.PI * 2,
+        burstTimer: 0,
+        depthLayer: depthLayer, // Store the depth layer
+        opacity: layerOpacity, // Store base opacity
       });
     }
   }
 
   draw() {
-    // Clear canvas with semi-transparent background
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    // Clear canvas with more transparent background for trail effect
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw particles and connections
+    // Sort particles by depth layer to draw far ones first
+    this.particles.sort((a, b) => b.depthLayer - a.depthLayer);
+
+    // Update active synaptic connections
+    this.updateSynapticConnections();
+
+    // Draw active synaptic connections
+    this.drawSynapticConnections();
+
+    // Update and draw particles (neurons)
     this.particles.forEach((particle, i) => {
+      // Randomly change direction to simulate more natural movement
+      if (Math.random() < 0.03) {
+        particle.lastDirection += ((Math.random() - 0.5) * Math.PI) / 4;
+        particle.vx =
+          Math.cos(particle.lastDirection) *
+          this.speed *
+          (0.8 + Math.random() * 0.5);
+        particle.vy =
+          Math.sin(particle.lastDirection) *
+          this.speed *
+          (0.8 + Math.random() * 0.5);
+      }
+
+      // Random bursts of neural activity
+      if (Math.random() < this.burstProbability) {
+        particle.burstTimer = 30 + Math.random() * 60;
+        particle.vx *= 2 + Math.random();
+        particle.vy *= 2 + Math.random();
+      }
+
+      // Reduce burst timer if active
+      if (particle.burstTimer > 0) {
+        particle.burstTimer--;
+        if (particle.burstTimer === 0) {
+          // Return to normal speed
+          particle.vx =
+            (Math.random() - 0.5) * this.speed * (Math.random() + 0.5);
+          particle.vy =
+            (Math.random() - 0.5) * this.speed * (Math.random() + 0.5);
+        }
+      }
+
       // Update particle position
       particle.x += particle.vx;
       particle.y += particle.vy;
 
-      // Bounce off edges
+      // Bounce off edges with slight randomization
       if (particle.x < 0 || particle.x > this.canvas.width) {
-        particle.vx = -particle.vx;
+        particle.vx = -particle.vx * (0.9 + Math.random() * 0.2);
+        particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
       }
       if (particle.y < 0 || particle.y > this.canvas.height) {
-        particle.vy = -particle.vy;
+        particle.vy = -particle.vy * (0.9 + Math.random() * 0.2);
+        particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
       }
 
-      // Draw the particle
-      this.ctx.beginPath();
-      this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      this.ctx.fillStyle = this.highlighted
-        ? 'rgba(255, 180, 0, 0.8)'
-        : particle.color;
-      this.ctx.fill();
+      // Random chance for neuron to fire
+      if (
+        Math.random() <
+          this.fireRate *
+            (1 + (this.depthLayers - particle.depthLayer) / this.depthLayers) ||
+        (this.highlighted && Math.random() < this.fireRate * 3)
+      ) {
+        particle.firing = true;
+        particle.fireIntensity = 1.0;
+      }
 
-      // Draw connections between particles
-      for (let j = i + 1; j < this.particles.length; j++) {
-        const particle2 = this.particles[j];
-        const dx = particle.x - particle2.x;
-        const dy = particle.y - particle2.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+      // Update firing state
+      if (particle.firing) {
+        // Draw the firing neuron (brighter)
+        this.ctx.beginPath();
+        this.ctx.arc(
+          particle.x,
+          particle.y,
+          particle.size * (1 + particle.fireIntensity),
+          0,
+          Math.PI * 2,
+        );
 
-        if (distance < this.connectionDistance) {
-          // Line opacity based on distance
-          const opacity = 1 - distance / this.connectionDistance;
-          this.ctx.beginPath();
-          this.ctx.moveTo(particle.x, particle.y);
-          this.ctx.lineTo(particle2.x, particle2.y);
-          this.ctx.strokeStyle = this.highlighted
-            ? `rgba(255, 140, 0, ${opacity * 0.3})`
-            : `rgba(0, 150, 255, ${opacity * 0.15})`;
-          this.ctx.lineWidth = 1;
-          this.ctx.stroke();
+        // White color with firing intensity and depth-based opacity
+        const fireOpacity = Math.min(
+          1,
+          particle.opacity + particle.fireIntensity * 0.3,
+        );
+        const fireColor = `rgba(255, 255, 255, ${fireOpacity})`;
+
+        this.ctx.fillStyle = fireColor;
+        this.ctx.fill();
+
+        // Add a glow effect
+        this.ctx.beginPath();
+        this.ctx.arc(
+          particle.x,
+          particle.y,
+          particle.size * (2 + particle.fireIntensity),
+          0,
+          Math.PI * 2,
+        );
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${fireOpacity * 0.3})`;
+        this.ctx.fill();
+
+        // Decay the firing intensity
+        particle.fireIntensity *= this.decayRate;
+        if (particle.fireIntensity < 0.1) {
+          particle.firing = false;
+          particle.fireIntensity = 0;
         }
+      } else {
+        // Draw the normal particle (neuron)
+        this.ctx.beginPath();
+        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = particle.color;
+        this.ctx.fill();
+      }
+    });
+  }
+
+  updateSynapticConnections() {
+    // Remove expired synaptic connections
+    this.activeConnections = this.activeConnections.filter((conn) => {
+      conn.life -= 1 + Math.random(); // Slightly randomize decay for more natural look
+      return conn.life > 0;
+    });
+
+    // Form new random connections
+    this.particles.forEach((particle, i) => {
+      // Prioritize connections for particles in foreground layers
+      const depthFactor =
+        (this.depthLayers - particle.depthLayer) / this.depthLayers;
+
+      // Increased chance of forming connections when firing or in foreground
+      const connectionChance =
+        (particle.firing
+          ? this.synapseFormationRate * 5
+          : this.synapseFormationRate) *
+        (1 + depthFactor);
+
+      if (Math.random() < connectionChance) {
+        // Find potential target particles within distance
+        const potentialTargets = this.particles.filter((p, j) => {
+          if (i === j) return false;
+          const dx = particle.x - p.x;
+          const dy = particle.y - p.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          return distance < this.connectionDistance;
+        });
+
+        if (potentialTargets.length > 0) {
+          // Prefer targets in similar depth layer for more realistic connections
+          potentialTargets.sort((a, b) => {
+            return (
+              Math.abs(a.depthLayer - particle.depthLayer) -
+              Math.abs(b.depthLayer - particle.depthLayer)
+            );
+          });
+
+          // Pick from the top 5 closest depth matches
+          const targetIndex = Math.floor(
+            Math.random() * Math.min(5, potentialTargets.length),
+          );
+          const target = potentialTargets[targetIndex];
+
+          // Shorter lifespan for connections between different depth layers
+          const depthDifference = Math.abs(
+            target.depthLayer - particle.depthLayer,
+          );
+          const lifeReduction = depthDifference * 5; // Reduce lifespan based on depth difference
+
+          // Create new connection with shorter random lifespan
+          this.activeConnections.push({
+            source: particle,
+            target: target,
+            life:
+              10 +
+              Math.floor(
+                Math.random() * (this.synapseLifespan - lifeReduction),
+              ),
+            strength: 0.3 + Math.random() * 0.7,
+            active: particle.firing || target.firing,
+            averageDepth: (particle.depthLayer + target.depthLayer) / 2,
+          });
+
+          // Trigger target neuron to fire with a probability
+          if (particle.firing && Math.random() < 0.3) {
+            target.firing = true;
+            target.fireIntensity = 0.7 + Math.random() * 0.3;
+          }
+        }
+      }
+    });
+  }
+
+  drawSynapticConnections() {
+    // Sort connections by depth to draw far ones first
+    this.activeConnections.sort((a, b) => b.averageDepth - a.averageDepth);
+
+    // Draw all active synaptic connections
+    this.activeConnections.forEach((conn) => {
+      const { source, target, life, strength, active, averageDepth } = conn;
+
+      // Calculate distance
+      const dx = source.x - target.x;
+      const dy = source.y - target.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Skip if too far - defensive programming
+      if (distance > this.connectionDistance * 1.5) return;
+
+      // Connection visual properties
+      const normalizedLife = life / this.synapseLifespan;
+      const lineOpacity =
+        normalizedLife *
+        strength *
+        (this.maxOpacity -
+          ((this.maxOpacity - this.minOpacity) * averageDepth) /
+            (this.depthLayers - 1));
+
+      // Determine color based on activity (all white now, just different opacity)
+      const lineColor = active
+        ? `rgba(255, 255, 255, ${Math.min(0.8, lineOpacity * 0.7)})`
+        : `rgba(255, 255, 255, ${Math.min(0.4, lineOpacity * 0.4)})`;
+
+      // Draw the connection line
+      this.ctx.beginPath();
+      this.ctx.moveTo(source.x, source.y);
+      this.ctx.lineTo(target.x, target.y);
+      this.ctx.strokeStyle = lineColor;
+      this.ctx.lineWidth = active ? 1.2 : 0.8;
+      this.ctx.stroke();
+
+      // Draw signal traveling along active connections
+      if (active && life > 10) {
+        const progress = 1 - (life % 10) / 10; // Faster signal movement
+        const signalX = source.x + (target.x - source.x) * progress;
+        const signalY = source.y + (target.y - source.y) * progress;
+
+        this.ctx.beginPath();
+        this.ctx.arc(signalX, signalY, 1.8, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, lineOpacity + 0.3)})`;
+        this.ctx.fill();
       }
     });
   }
@@ -169,17 +402,31 @@ class ParticlesAnimation extends AnimationInterface {
   onFaceDetected() {
     console.log('Face detected in particles animation');
 
-    // Highlight the particles when face is detected
+    // Highlight effect but still using white
     this.highlighted = true;
 
     // Increase connection distance and speed for more dynamic effect
     this.connectionDistance = 200;
     this.speed = 1;
+    this.fireRate = 0.025; // Increase neural activity
+    this.burstProbability = 0.007;
 
-    // Update particles with new speed
-    this.particles.forEach((particle) => {
-      particle.vx = Math.random() * this.speed - this.speed / 2;
-      particle.vy = Math.random() * this.speed - this.speed / 2;
+    // Trigger wave of neural activity
+    this.particles.forEach((particle, i) => {
+      // Update velocities with more energy
+      particle.vx = (Math.random() - 0.5) * this.speed * 2;
+      particle.vy = (Math.random() - 0.5) * this.speed * 2;
+
+      // Randomly trigger firing state for some particles
+      if (Math.random() < 0.3) {
+        setTimeout(() => {
+          if (this.particles[i]) {
+            // Check if particle still exists
+            particle.firing = true;
+            particle.fireIntensity = 0.7 + Math.random() * 0.3;
+          }
+        }, i * 15); // Staggered firing for wave effect
+      }
     });
   }
 
