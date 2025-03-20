@@ -10,7 +10,7 @@ class ParticlesAnimation extends AnimationInterface {
     this.animationFrame = null;
 
     // Animation settings
-    this.particleCount = 150; // Increased for more visual density
+    this.particleCount = 250; // Significantly increased for a fuller scene
     this.particleColor = 'rgba(255, 255, 255, 0.8)'; // Changed to white
     this.lineColor = 'rgba(255, 255, 255, 0.15)'; // Changed to white
     this.particleSize = 3;
@@ -26,9 +26,10 @@ class ParticlesAnimation extends AnimationInterface {
     this.decayRate = 0.95; // Faster decay rate
 
     // Depth perception settings
-    this.depthLayers = 5; // Number of depth layers
+    this.depthLayers = 7; // Increased depth layers for more background
     this.maxOpacity = 0.9; // Max opacity for closest particles
-    this.minOpacity = 0.2; // Min opacity for farthest particles
+    this.minOpacity = 0.15; // Slightly lower minimum opacity for more contrast
+    this.backgroundRatio = 0.65; // 65% of particles will be in background layers
 
     // State flags for animation effects
     this.highlighted = false;
@@ -96,8 +97,15 @@ class ParticlesAnimation extends AnimationInterface {
     this.activeConnections = [];
 
     for (let i = 0; i < this.particleCount; i++) {
-      // Assign a depth layer (0 = closest, this.depthLayers-1 = farthest)
-      const depthLayer = Math.floor(Math.random() * this.depthLayers);
+      // Biased random distribution to favor background layers
+      let depthLayer;
+      if (Math.random() < this.backgroundRatio) {
+        // Background particles (layers 3-6)
+        depthLayer = Math.floor(Math.random() * (this.depthLayers - 3)) + 3;
+      } else {
+        // Foreground particles (layers 0-2)
+        depthLayer = Math.floor(Math.random() * 3);
+      }
 
       // Calculate opacity based on depth (closer = more opaque)
       const layerOpacity =
@@ -105,23 +113,36 @@ class ParticlesAnimation extends AnimationInterface {
         ((this.maxOpacity - this.minOpacity) * depthLayer) /
           (this.depthLayers - 1);
 
-      // Adjust size based on depth (closer = larger)
-      const depthSizeFactor = 1 - (0.4 * depthLayer) / (this.depthLayers - 1);
+      // Adjust size based on depth (closer = larger, deeper background = smaller)
+      const depthSizeFactor = 1 - (0.6 * depthLayer) / (this.depthLayers - 1);
+
+      // Particles in deeper background move slower
+      const speedFactor = 1 - (0.5 * depthLayer) / (this.depthLayers - 1);
 
       // Create particles with more varied properties and depth perception
       this.particles.push({
         x: Math.random() * this.canvas.width,
         y: Math.random() * this.canvas.height,
-        vx: (Math.random() - 0.5) * this.speed * (Math.random() + 0.5),
-        vy: (Math.random() - 0.5) * this.speed * (Math.random() + 0.5),
+        vx:
+          (Math.random() - 0.5) *
+          this.speed *
+          speedFactor *
+          (Math.random() + 0.5),
+        vy:
+          (Math.random() - 0.5) *
+          this.speed *
+          speedFactor *
+          (Math.random() + 0.5),
         size: this.particleSize * (0.7 + Math.random() * 0.8) * depthSizeFactor,
-        color: `rgba(255, 255, 255, ${layerOpacity})`, // White with depth-based opacity
+        color: `rgba(255, 255, 255, ${layerOpacity})`,
         firing: false,
         fireIntensity: 0,
         lastDirection: Math.random() * Math.PI * 2,
         burstTimer: 0,
-        depthLayer: depthLayer, // Store the depth layer
-        opacity: layerOpacity, // Store base opacity
+        depthLayer: depthLayer,
+        opacity: layerOpacity,
+        connectionProbability:
+          depthLayer < 4 ? 1 : 0.5 - (depthLayer - 4) * 0.1, // Reduce connection probability in far background
       });
     }
   }
@@ -139,6 +160,9 @@ class ParticlesAnimation extends AnimationInterface {
 
     // Draw active synaptic connections
     this.drawSynapticConnections();
+
+    // Draw a subtle background glow to enhance the digital brain atmosphere
+    this.drawBackgroundGlow();
 
     // Update and draw particles (neurons)
     this.particles.forEach((particle, i) => {
@@ -249,6 +273,28 @@ class ParticlesAnimation extends AnimationInterface {
     });
   }
 
+  drawBackgroundGlow() {
+    // Add a subtle ambient neural activity in the background
+    for (let i = 0; i < 3; i++) {
+      if (Math.random() < 0.03) {
+        // Random position
+        const x = Math.random() * this.canvas.width;
+        const y = Math.random() * this.canvas.height;
+
+        // Create a subtle glow
+        const radius = 30 + Math.random() * 100;
+        const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        this.ctx.beginPath();
+        this.ctx.fillStyle = gradient;
+        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+    }
+  }
+
   updateSynapticConnections() {
     // Remove expired synaptic connections
     this.activeConnections = this.activeConnections.filter((conn) => {
@@ -258,6 +304,14 @@ class ParticlesAnimation extends AnimationInterface {
 
     // Form new random connections
     this.particles.forEach((particle, i) => {
+      // Skip some connection checks for far background particles to improve performance
+      if (
+        particle.depthLayer > 4 &&
+        Math.random() > particle.connectionProbability
+      ) {
+        return;
+      }
+
       // Prioritize connections for particles in foreground layers
       const depthFactor =
         (this.depthLayers - particle.depthLayer) / this.depthLayers;
@@ -269,7 +323,10 @@ class ParticlesAnimation extends AnimationInterface {
           : this.synapseFormationRate) *
         (1 + depthFactor);
 
-      if (Math.random() < connectionChance) {
+      // Deep background particles form fewer connections
+      const depthModifier = particle.depthLayer > 4 ? 0.5 : 1;
+
+      if (Math.random() < connectionChance * depthModifier) {
         // Find potential target particles within distance
         const potentialTargets = this.particles.filter((p, j) => {
           if (i === j) return false;
