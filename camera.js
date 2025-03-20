@@ -122,4 +122,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, 1500);
   }
+
+  // Let app controller know camera is ready
+  if (window.appController) {
+    window.appController.debug('Camera module initialized');
+  }
 });
+
+// Camera Module - Responsible for face detection
+
+// Modify the face detection callback to use our new event system
+function onFaceDetected() {
+  // Instead of directly manipulating the UI, dispatch an event
+  if (window.dispatchFaceDetected) {
+    window.dispatchFaceDetected();
+  } else {
+    console.error('Face detection event dispatcher not found');
+    // Fallback to direct DOM manipulation if needed
+    const cameraContainer = document.getElementById('camera-container');
+    if (cameraContainer) {
+      cameraContainer.style.display = 'none';
+    }
+  }
+
+  // Log face detection
+  console.log('Face detected by camera module');
+}

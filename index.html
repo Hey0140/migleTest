@@ -287,8 +287,11 @@
       "
     ></div>
 
-    <script src="matrix.js"></script>
+    <!-- Load scripts in proper order -->
+    <script src="app.js"></script>
     <script src="camera.js"></script>
+    <!-- Replace matrix-animation.js with particles-animation.js -->
+    <script src="particles-animation.js"></script>
     <script>
       // Ensure camera stays visible
       window.addEventListener('load', function () {
