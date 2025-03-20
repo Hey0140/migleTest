@@ -64,6 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
       matrixBackground.classList.add('fade-out');
     }
 
+    // Trigger explosive connection effect in particle animation
+    if (window.appController && window.appController.notifyFaceDetected) {
+      window.appController.notifyFaceDetected();
+    }
+
     // Call the face recognition complete function
     onFaceRecognitionComplete();
   };
@@ -143,6 +148,11 @@ function onFaceDetected() {
     if (cameraContainer) {
       cameraContainer.style.display = 'none';
     }
+  }
+
+  // Trigger explosive connection effect in particle animation
+  if (window.appController && window.appController.notifyFaceDetected) {
+    window.appController.notifyFaceDetected();
   }
 
   // Log face detection

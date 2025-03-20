@@ -12,18 +12,18 @@ class ParticlesAnimation extends AnimationInterface {
     // Animation settings
     this.particleCount = 300; // Even more particles since they'll be stationary
     this.particleColor = 'rgba(255, 255, 255, 0.8)'; // Changed to white
-    this.lineColor = 'rgba(255, 255, 255, 0.15)'; // Changed to white
+    this.lineColor = 'rgba(255, 255, 255, 0.15)';
     this.particleSize = 3;
-    this.connectionDistance = 150;
-    this.speed = 0.5;
+    this.connectionDistance = 120; // Reduced from 150 for sparser connections
+    this.speed = 0.3; // Reduced for slower movement
 
     // Neural activity simulation
-    this.synapseLifespan = 60; // Reduced for faster disappearing connections
-    this.synapseFormationRate = 0.04; // Increased since particles won't move to create new connections
-    this.fireRate = 0.01; // Increased to compensate for stationary positions
+    this.synapseLifespan = 20; // Reduced from 40 to make connections disappear faster
+    this.synapseFormationRate = 0.015; // Significantly reduced from 0.04
+    this.fireRate = 0.003; // Reduced from 0.01 for less frequent firing
     this.activeConnections = []; // Track current synaptic connections
-    this.burstProbability = 0.002; // Slightly increased
-    this.decayRate = 0.95; // Faster decay rate
+    this.burstProbability = 0.001; // Reduced from 0.002
+    this.decayRate = 0.92; // Faster decay to make activity disappear quicker
 
     // Depth perception settings
     this.depthLayers = 7; // Increased depth layers for more background
@@ -34,12 +34,27 @@ class ParticlesAnimation extends AnimationInterface {
     // State flags for animation effects
     this.highlighted = false;
 
-    // Movement behavior (now much more limited)
-    this.maxMovement = 0.3; // Maximum pixel movement per frame (very slight)
-    this.anchorStrength = 0.95; // How strongly particles are pulled to their anchor points
+    // Store original values for resetting after effect
+    this.originalValues = {
+      connectionDistance: 120, // Match the reduced value
+      fireRate: 0.003, // Match the reduced value
+      synapseFormationRate: 0.015, // Match the reduced value
+      signalSpeed: 0.8, // Slower signal speed
+      maxOpacity: 0.9,
+      maxMovement: 0.8,
+      anchorStrength: 0.02,
+    };
+
+    // Movement behavior - increased for more visible floating
+    this.maxMovement = 0.8; // Increased from 0.3 for more noticeable movement
+    this.anchorStrength = 0.02; // Greatly reduced from 0.95 to allow more drifting
+    this.movementChangeFrequency = 0.03; // How often particles change direction
 
     // Signal activity settings
-    this.signalSpeed = 1.2; // Increased signal speed for more activity
+    this.signalSpeed = 0.8; // Reduced from 1.2 for slower signals
+
+    // Effect timer
+    this.effectTimer = null;
   }
 
   initialize() {
@@ -154,21 +169,24 @@ class ParticlesAnimation extends AnimationInterface {
           (this.depthLayers - 1);
       const depthSizeFactor = 1 - (0.6 * depthLayer) / (this.depthLayers - 1);
 
-      // Create particles with anchor positions
+      // Create particles with anchor positions and more movement
       this.particles.push({
         x: x,
         y: y,
         anchorX: x, // Original/anchor position
         anchorY: y,
-        // Tiny random movement
+        // More significant random movement based on depth
         vx:
           (Math.random() - 0.5) *
           this.maxMovement *
-          (1 - (0.7 * depthLayer) / this.depthLayers),
+          (1 - (0.5 * depthLayer) / this.depthLayers),
         vy:
           (Math.random() - 0.5) *
           this.maxMovement *
-          (1 - (0.7 * depthLayer) / this.depthLayers),
+          (1 - (0.5 * depthLayer) / this.depthLayers),
+        // Add direction change counters
+        directionChangeCounter: Math.floor(Math.random() * 100),
+        movementAmplitude: 0.5 + Math.random() * 1.5, // Random movement amplitude
         size: this.particleSize * (0.7 + Math.random() * 0.8) * depthSizeFactor,
         color: `rgba(255, 255, 255, ${layerOpacity})`,
         firing: false,
@@ -234,25 +252,37 @@ class ParticlesAnimation extends AnimationInterface {
 
     // Update and draw particles (neurons)
     this.particles.forEach((particle, i) => {
-      // Very slight random drift
-      if (Math.random() < 0.05) {
-        particle.vx =
-          (Math.random() - 0.5) *
+      // Particle movement pattern - more organic movement
+      particle.directionChangeCounter--;
+
+      // Change direction periodically for organic movement
+      if (
+        particle.directionChangeCounter <= 0 ||
+        Math.random() < this.movementChangeFrequency
+      ) {
+        // Create smooth direction changes
+        const angle = Math.random() * Math.PI * 2;
+        const speed =
+          (0.3 + Math.random() * 1.0) *
+          particle.movementAmplitude *
           this.maxMovement *
-          (1 - (0.7 * particle.depthLayer) / this.depthLayers);
-        particle.vy =
-          (Math.random() - 0.5) *
-          this.maxMovement *
-          (1 - (0.7 * particle.depthLayer) / this.depthLayers);
+          (1 - (0.5 * particle.depthLayer) / this.depthLayers);
+
+        particle.vx = Math.cos(angle) * speed;
+        particle.vy = Math.sin(angle) * speed;
+        particle.directionChangeCounter = 50 + Math.floor(Math.random() * 150);
       }
 
-      // Update particle position with very limited movement
+      // Update particle position with increased movement
       particle.x += particle.vx;
       particle.y += particle.vy;
 
-      // Pull back to anchor position to prevent drift
+      // Pull back to anchor position, but much more gently
       particle.x += (particle.anchorX - particle.x) * this.anchorStrength;
       particle.y += (particle.anchorY - particle.y) * this.anchorStrength;
+
+      // Keep particles within screen bounds with soft boundaries
+      this.keepParticleInBounds(particle);
 
       // Random chance for neuron to fire based on timer
       particle.nextFireTime--;
@@ -556,27 +586,84 @@ class ParticlesAnimation extends AnimationInterface {
 
   // Animation Interface Methods
   onFaceDetected() {
-    console.log('Face detected in particles animation');
+    console.log(
+      'Face detected in particles animation - triggering gentle effect',
+    );
+
+    // Clear any existing effect timer
+    if (this.effectTimer) {
+      clearTimeout(this.effectTimer);
+    }
 
     // Highlight effect but still using white
     this.highlighted = true;
 
-    // Increase connection parameters for more dynamic effect
-    this.connectionDistance = 200;
-    this.fireRate = 0.03;
-    this.synapseFormationRate = 0.06;
-    this.signalSpeed = 1.5;
+    // Keep connection distance similar to default, just slightly increased
+    this.connectionDistance = 140; // Only slightly increased from 120 to maintain similar connection pattern
+    this.fireRate = 0.1; // Increased firing rate for more activity
+    this.synapseFormationRate = 0.08; // More connections forming but between nearby particles
+    this.signalSpeed = 2.0; // Faster signals along existing connections
 
-    // Trigger wave of neural activity
-    this.particles.forEach((particle, i) => {
-      // Randomly trigger firing state for some particles
-      if (Math.random() < 0.4) {
-        setTimeout(() => {
-          if (this.particles[i]) {
-            particle.firing = true;
-            particle.fireIntensity = 0.7 + Math.random() * 0.3;
+    // Increase decay rate to make connections disappear faster
+    this.decayRate = 0.85; // Faster decay during effect (original is 0.92)
+
+    // Smaller increase in movement for gentler effect
+    this.maxMovement = 1.2;
+
+    // Increase brightness for more dramatic effect
+    this.particles.forEach((particle) => {
+      particle.originalOpacity = particle.opacity;
+      particle.opacity = Math.min(1.0, particle.opacity * 1.3);
+    });
+
+    // Trigger gentler wave of neural activity
+    let counter = 0;
+    const waveInterval = setInterval(() => {
+      counter++;
+      // Create two waves of activity
+      if (counter <= 2) {
+        this.particles.forEach((particle, i) => {
+          // Higher chance of firing for more activity but with smaller connections
+          if (Math.random() < 0.6) {
+            setTimeout(() => {
+              if (this.particles[i]) {
+                particle.firing = true;
+                particle.fireIntensity = 0.8 + Math.random() * 0.3; // Slightly higher intensity
+              }
+            }, i % 70); // Staggered firing
           }
-        }, i * 10); // Faster staggered firing for wave effect
+        });
+      } else {
+        clearInterval(waveInterval);
+      }
+    }, 350);
+
+    // Reset to normal state after 1.2 seconds
+    this.effectTimer = setTimeout(() => {
+      this.resetToNormalState();
+    }, 1200);
+  }
+
+  // New method to reset animation to normal state
+  resetToNormalState() {
+    console.log('Resetting particle animation to normal state');
+
+    // Reset to original values
+    this.highlighted = false;
+    this.connectionDistance = this.originalValues.connectionDistance;
+    this.fireRate = this.originalValues.fireRate;
+    this.synapseFormationRate = this.originalValues.synapseFormationRate;
+    this.signalSpeed = this.originalValues.signalSpeed;
+
+    // Reset movement parameters too
+    this.maxMovement = this.originalValues.maxMovement;
+    this.anchorStrength = this.originalValues.anchorStrength;
+
+    // Reset particle opacities
+    this.particles.forEach((particle) => {
+      if (particle.originalOpacity) {
+        particle.opacity = particle.originalOpacity;
+        delete particle.originalOpacity;
       }
     });
   }
@@ -588,10 +675,44 @@ class ParticlesAnimation extends AnimationInterface {
   resume() {
     this.startAnimation();
   }
+
+  // New method to keep particles within bounds
+  keepParticleInBounds(particle) {
+    const margin = 50;
+    const bounceStrength = 0.05;
+
+    // Soft boundary on left
+    if (particle.x < margin) {
+      particle.vx += bounceStrength;
+    }
+    // Soft boundary on right
+    if (particle.x > this.canvas.width - margin) {
+      particle.vx -= bounceStrength;
+    }
+    // Soft boundary on top
+    if (particle.y < margin) {
+      particle.vy += bounceStrength;
+    }
+    // Soft boundary on bottom
+    if (particle.y > this.canvas.height - margin) {
+      particle.vy -= bounceStrength;
+    }
+  }
 }
 
 // Initialize when the script loads
 document.addEventListener('DOMContentLoaded', () => {
   const particlesAnimation = new ParticlesAnimation();
   particlesAnimation.initialize();
+
+  // Register a global method to trigger the face detection effect
+  if (!window.appController) {
+    window.appController = {};
+  }
+
+  window.appController.notifyFaceDetected = function () {
+    if (particlesAnimation) {
+      particlesAnimation.onFaceDetected();
+    }
+  };
 });
