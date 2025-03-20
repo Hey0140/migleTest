@@ -224,36 +224,50 @@
         </section>
 
         <section id="scenario-section" class="content-section">
-          <p id="scenario-text">F123-232의 생존 시나리오 3개 확인</p>
-          <div id="video-container">
-            <div class="video-preview">
-              <video muted loop>
+          <header>
+            <h2 id="scenario-text">F123-232의 생존 시나리오 3개 확인</h2>
+          </header>
+          <div id="video-container" class="scenario-videos">
+            <div class="video-preview" data-scenario="1">
+              <video muted loop class="scenario-video">
                 <source src="videos/scenario1.mp4" type="video/mp4" />
+                <p>Your browser does not support HTML5 video.</p>
               </video>
+              <div class="video-overlay">시나리오 1</div>
             </div>
-            <div class="video-preview">
-              <video muted loop>
+            <div class="video-preview" data-scenario="2">
+              <video muted loop class="scenario-video">
                 <source src="videos/scenario2.mp4" type="video/mp4" />
+                <p>Your browser does not support HTML5 video.</p>
               </video>
+              <div class="video-overlay">시나리오 2</div>
             </div>
-            <div class="video-preview">
-              <video muted loop>
+            <div class="video-preview" data-scenario="3">
+              <video muted loop class="scenario-video"></video>
                 <source src="videos/scenario3.mp4" type="video/mp4" />
+                <p>Your browser does not support HTML5 video.</p>
               </video>
+              <div class="video-overlay">시나리오 3</div>
             </div>
           </div>
         </section>
 
         <section id="overlay" class="content-section">
-          <p id="question-text">
-            정말 또 다른 당신의 삶을 확인하실건가요?<br />
-            두려울수도, 재밌을수도, 아무렇지 않을 수도 있습니다.
-          </p>
-          <button id="play-button" disabled>재생</button>
+          <div class="question-container">
+            <p id="question-text">
+              정말 또 다른 당신의 삶을 확인하실건가요?<br />
+              두려울수도, 재밌을수도, 아무렇지 않을 수도 있습니다.
+            </p>
+            <div class="button-container">
+              <button id="play-button" disabled class="action-button">재생</button>
+            </div>
+          </div>
         </section>
 
         <section id="final-message" class="content-section">
-          <p>잠시후 준비가 완료되면 전시 공간 안으로 진입해주세요.</p>
+          <div class="message-container">
+            <p>잠시후 준비가 완료되면 전시 공간 안으로 진입해주세요.</p>
+          </div>
         </section>
       </div>
     </div>
