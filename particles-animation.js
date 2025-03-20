@@ -10,7 +10,7 @@ class ParticlesAnimation extends AnimationInterface {
     this.animationFrame = null;
 
     // Animation settings
-    this.particleCount = 250; // Significantly increased for a fuller scene
+    this.particleCount = 300; // Even more particles since they'll be stationary
     this.particleColor = 'rgba(255, 255, 255, 0.8)'; // Changed to white
     this.lineColor = 'rgba(255, 255, 255, 0.15)'; // Changed to white
     this.particleSize = 3;
@@ -19,8 +19,8 @@ class ParticlesAnimation extends AnimationInterface {
 
     // Neural activity simulation
     this.synapseLifespan = 60; // Reduced for faster disappearing connections
-    this.synapseFormationRate = 0.03; // Increased for more connections
-    this.fireRate = 0.008; // Slightly increased
+    this.synapseFormationRate = 0.04; // Increased since particles won't move to create new connections
+    this.fireRate = 0.01; // Increased to compensate for stationary positions
     this.activeConnections = []; // Track current synaptic connections
     this.burstProbability = 0.002; // Slightly increased
     this.decayRate = 0.95; // Faster decay rate
@@ -33,6 +33,13 @@ class ParticlesAnimation extends AnimationInterface {
 
     // State flags for animation effects
     this.highlighted = false;
+
+    // Movement behavior (now much more limited)
+    this.maxMovement = 0.3; // Maximum pixel movement per frame (very slight)
+    this.anchorStrength = 0.95; // How strongly particles are pulled to their anchor points
+
+    // Signal activity settings
+    this.signalSpeed = 1.2; // Increased signal speed for more activity
   }
 
   initialize() {
@@ -96,8 +103,41 @@ class ParticlesAnimation extends AnimationInterface {
     this.particles = [];
     this.activeConnections = [];
 
+    // Create a more even distribution of particles using grid with randomization
+    const gridCellSize = Math.sqrt(
+      (this.canvas.width * this.canvas.height) / (this.particleCount * 0.7),
+    );
+    const gridColumns = Math.ceil(this.canvas.width / gridCellSize);
+    const gridRows = Math.ceil(this.canvas.height / gridCellSize);
+
+    // Track filled cells to avoid overcrowding
+    const filledCells = new Set();
+
     for (let i = 0; i < this.particleCount; i++) {
-      // Biased random distribution to favor background layers
+      let x,
+        y,
+        cellKey,
+        attempts = 0;
+
+      // Try to find an unfilled cell
+      do {
+        const col = Math.floor(Math.random() * gridColumns);
+        const row = Math.floor(Math.random() * gridRows);
+        cellKey = `${col}:${row}`;
+
+        // Add some randomness within the cell
+        x = (col + 0.3 + Math.random() * 0.4) * gridCellSize;
+        y = (row + 0.3 + Math.random() * 0.4) * gridCellSize;
+
+        attempts++;
+        // After too many attempts, just accept overlap
+        if (attempts > 10) break;
+      } while (filledCells.has(cellKey) && attempts < 10);
+
+      filledCells.add(cellKey);
+
+      // Assign a depth layer (0 = closest, this.depthLayers-1 = farthest)
+      // Use a more biased distribution to have many background elements
       let depthLayer;
       if (Math.random() < this.backgroundRatio) {
         // Background particles (layers 3-6)
@@ -107,44 +147,72 @@ class ParticlesAnimation extends AnimationInterface {
         depthLayer = Math.floor(Math.random() * 3);
       }
 
-      // Calculate opacity based on depth (closer = more opaque)
+      // Calculate opacity and size based on depth
       const layerOpacity =
         this.maxOpacity -
         ((this.maxOpacity - this.minOpacity) * depthLayer) /
           (this.depthLayers - 1);
-
-      // Adjust size based on depth (closer = larger, deeper background = smaller)
       const depthSizeFactor = 1 - (0.6 * depthLayer) / (this.depthLayers - 1);
 
-      // Particles in deeper background move slower
-      const speedFactor = 1 - (0.5 * depthLayer) / (this.depthLayers - 1);
-
-      // Create particles with more varied properties and depth perception
+      // Create particles with anchor positions
       this.particles.push({
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * this.canvas.height,
+        x: x,
+        y: y,
+        anchorX: x, // Original/anchor position
+        anchorY: y,
+        // Tiny random movement
         vx:
           (Math.random() - 0.5) *
-          this.speed *
-          speedFactor *
-          (Math.random() + 0.5),
+          this.maxMovement *
+          (1 - (0.7 * depthLayer) / this.depthLayers),
         vy:
           (Math.random() - 0.5) *
-          this.speed *
-          speedFactor *
-          (Math.random() + 0.5),
+          this.maxMovement *
+          (1 - (0.7 * depthLayer) / this.depthLayers),
         size: this.particleSize * (0.7 + Math.random() * 0.8) * depthSizeFactor,
         color: `rgba(255, 255, 255, ${layerOpacity})`,
         firing: false,
         fireIntensity: 0,
-        lastDirection: Math.random() * Math.PI * 2,
+        connectionState: Math.random(), // Random state for connection behavior
         burstTimer: 0,
         depthLayer: depthLayer,
         opacity: layerOpacity,
         connectionProbability:
-          depthLayer < 4 ? 1 : 0.5 - (depthLayer - 4) * 0.1, // Reduce connection probability in far background
+          depthLayer < 4 ? 1 : 0.5 - (depthLayer - 4) * 0.1,
+        nextFireTime: Math.random() * 200, // Random initial time until first firing
+        dendrites: [], // Will store small lines representing dendrites
       });
     }
+
+    // Generate some random dendrites for visual effect
+    this.generateDendrites();
+  }
+
+  generateDendrites() {
+    // Add dendrite-like branches to some particles
+    this.particles.forEach((particle) => {
+      // More dendrites for foreground particles
+      const dendriteCount =
+        Math.floor(Math.random() * 3) *
+        (1 - (0.5 * particle.depthLayer) / this.depthLayers);
+
+      particle.dendrites = [];
+      for (let i = 0; i < dendriteCount; i++) {
+        const length =
+          5 +
+          Math.random() *
+            15 *
+            (1 - (0.5 * particle.depthLayer) / this.depthLayers);
+        const angle = Math.random() * Math.PI * 2;
+
+        particle.dendrites.push({
+          length: length,
+          angle: angle,
+          width: 0.5 + Math.random() * 0.5,
+          opacity: 0.1 + Math.random() * 0.3,
+        });
+      }
+    });
   }
 
   draw() {
@@ -166,62 +234,54 @@ class ParticlesAnimation extends AnimationInterface {
 
     // Update and draw particles (neurons)
     this.particles.forEach((particle, i) => {
-      // Randomly change direction to simulate more natural movement
-      if (Math.random() < 0.03) {
-        particle.lastDirection += ((Math.random() - 0.5) * Math.PI) / 4;
+      // Very slight random drift
+      if (Math.random() < 0.05) {
         particle.vx =
-          Math.cos(particle.lastDirection) *
-          this.speed *
-          (0.8 + Math.random() * 0.5);
+          (Math.random() - 0.5) *
+          this.maxMovement *
+          (1 - (0.7 * particle.depthLayer) / this.depthLayers);
         particle.vy =
-          Math.sin(particle.lastDirection) *
-          this.speed *
-          (0.8 + Math.random() * 0.5);
+          (Math.random() - 0.5) *
+          this.maxMovement *
+          (1 - (0.7 * particle.depthLayer) / this.depthLayers);
       }
 
-      // Random bursts of neural activity
-      if (Math.random() < this.burstProbability) {
-        particle.burstTimer = 30 + Math.random() * 60;
-        particle.vx *= 2 + Math.random();
-        particle.vy *= 2 + Math.random();
-      }
-
-      // Reduce burst timer if active
-      if (particle.burstTimer > 0) {
-        particle.burstTimer--;
-        if (particle.burstTimer === 0) {
-          // Return to normal speed
-          particle.vx =
-            (Math.random() - 0.5) * this.speed * (Math.random() + 0.5);
-          particle.vy =
-            (Math.random() - 0.5) * this.speed * (Math.random() + 0.5);
-        }
-      }
-
-      // Update particle position
+      // Update particle position with very limited movement
       particle.x += particle.vx;
       particle.y += particle.vy;
 
-      // Bounce off edges with slight randomization
-      if (particle.x < 0 || particle.x > this.canvas.width) {
-        particle.vx = -particle.vx * (0.9 + Math.random() * 0.2);
-        particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
-      }
-      if (particle.y < 0 || particle.y > this.canvas.height) {
-        particle.vy = -particle.vy * (0.9 + Math.random() * 0.2);
-        particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
+      // Pull back to anchor position to prevent drift
+      particle.x += (particle.anchorX - particle.x) * this.anchorStrength;
+      particle.y += (particle.anchorY - particle.y) * this.anchorStrength;
+
+      // Random chance for neuron to fire based on timer
+      particle.nextFireTime--;
+      if (particle.nextFireTime <= 0) {
+        particle.firing = true;
+        particle.fireIntensity = 1.0;
+        // Set next fire time (varied, higher layer neurons fire more frequently)
+        particle.nextFireTime =
+          100 +
+          Math.random() *
+            300 *
+            (1 + (0.5 * particle.depthLayer) / this.depthLayers);
       }
 
-      // Random chance for neuron to fire
+      // Additional random chance for firing
       if (
-        Math.random() <
-          this.fireRate *
-            (1 + (this.depthLayers - particle.depthLayer) / this.depthLayers) ||
+        (!particle.firing &&
+          Math.random() <
+            this.fireRate *
+              (1 +
+                (this.depthLayers - particle.depthLayer) / this.depthLayers)) ||
         (this.highlighted && Math.random() < this.fireRate * 3)
       ) {
         particle.firing = true;
         particle.fireIntensity = 1.0;
       }
+
+      // Draw dendrites first (beneath the neuron)
+      this.drawDendrites(particle);
 
       // Update firing state
       if (particle.firing) {
@@ -273,6 +333,29 @@ class ParticlesAnimation extends AnimationInterface {
     });
   }
 
+  drawDendrites(particle) {
+    if (!particle.dendrites || particle.dendrites.length === 0) return;
+
+    particle.dendrites.forEach((dendrite) => {
+      const startX = particle.x;
+      const startY = particle.y;
+      const endX = startX + Math.cos(dendrite.angle) * dendrite.length;
+      const endY = startY + Math.sin(dendrite.angle) * dendrite.length;
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(startX, startY);
+      this.ctx.lineTo(endX, endY);
+
+      // Use particle's opacity but reduce it for dendrites
+      const lineOpacity =
+        particle.opacity * dendrite.opacity * (particle.firing ? 1.3 : 1);
+
+      this.ctx.strokeStyle = `rgba(255, 255, 255, ${lineOpacity})`;
+      this.ctx.lineWidth = dendrite.width;
+      this.ctx.stroke();
+    });
+  }
+
   drawBackgroundGlow() {
     // Add a subtle ambient neural activity in the background
     for (let i = 0; i < 3; i++) {
@@ -302,7 +385,7 @@ class ParticlesAnimation extends AnimationInterface {
       return conn.life > 0;
     });
 
-    // Form new random connections
+    // Form new connections with increased probability (since particles don't move to create new connections)
     this.particles.forEach((particle, i) => {
       // Skip some connection checks for far background particles to improve performance
       if (
@@ -312,28 +395,37 @@ class ParticlesAnimation extends AnimationInterface {
         return;
       }
 
-      // Prioritize connections for particles in foreground layers
-      const depthFactor =
-        (this.depthLayers - particle.depthLayer) / this.depthLayers;
-
-      // Increased chance of forming connections when firing or in foreground
+      // Increased chance of forming connections when firing
       const connectionChance =
         (particle.firing
           ? this.synapseFormationRate * 5
           : this.synapseFormationRate) *
-        (1 + depthFactor);
+        (1 + (this.depthLayers - particle.depthLayer) / this.depthLayers);
 
-      // Deep background particles form fewer connections
-      const depthModifier = particle.depthLayer > 4 ? 0.5 : 1;
+      if (Math.random() < connectionChance) {
+        // Find potential targets in a more directional manner
+        // Neurons tend to connect in certain directions, not just randomly
+        const connectionAngle = particle.connectionState * Math.PI * 2;
+        const angleVariance = Math.PI / 2; // 90 degrees variance
 
-      if (Math.random() < connectionChance * depthModifier) {
-        // Find potential target particles within distance
         const potentialTargets = this.particles.filter((p, j) => {
           if (i === j) return false;
-          const dx = particle.x - p.x;
-          const dy = particle.y - p.y;
+
+          const dx = p.x - particle.x;
+          const dy = p.y - particle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          return distance < this.connectionDistance;
+
+          // Check if within distance and angle range
+          if (distance > this.connectionDistance) return false;
+
+          // Calculate angle to this particle
+          const angle = Math.atan2(dy, dx);
+
+          // Check if within angle range (considering circular wrapping)
+          const angleDiff = Math.abs(
+            ((angle - connectionAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI,
+          );
+          return angleDiff < angleVariance;
         });
 
         if (potentialTargets.length > 0) {
@@ -376,6 +468,11 @@ class ParticlesAnimation extends AnimationInterface {
             target.firing = true;
             target.fireIntensity = 0.7 + Math.random() * 0.3;
           }
+
+          // Make the signal travel faster for more activity
+          this.activeConnections[
+            this.activeConnections.length - 1
+          ].signalSpeed = this.signalSpeed;
         }
       }
     });
@@ -421,7 +518,9 @@ class ParticlesAnimation extends AnimationInterface {
 
       // Draw signal traveling along active connections
       if (active && life > 10) {
-        const progress = 1 - (life % 10) / 10; // Faster signal movement
+        // Use connection's signalSpeed for faster movement
+        const signalCycleLength = conn.signalSpeed ? 10 / conn.signalSpeed : 10;
+        const progress = 1 - (life % signalCycleLength) / signalCycleLength;
         const signalX = source.x + (target.x - source.x) * progress;
         const signalY = source.y + (target.y - source.y) * progress;
 
@@ -462,27 +561,22 @@ class ParticlesAnimation extends AnimationInterface {
     // Highlight effect but still using white
     this.highlighted = true;
 
-    // Increase connection distance and speed for more dynamic effect
+    // Increase connection parameters for more dynamic effect
     this.connectionDistance = 200;
-    this.speed = 1;
-    this.fireRate = 0.025; // Increase neural activity
-    this.burstProbability = 0.007;
+    this.fireRate = 0.03;
+    this.synapseFormationRate = 0.06;
+    this.signalSpeed = 1.5;
 
     // Trigger wave of neural activity
     this.particles.forEach((particle, i) => {
-      // Update velocities with more energy
-      particle.vx = (Math.random() - 0.5) * this.speed * 2;
-      particle.vy = (Math.random() - 0.5) * this.speed * 2;
-
       // Randomly trigger firing state for some particles
-      if (Math.random() < 0.3) {
+      if (Math.random() < 0.4) {
         setTimeout(() => {
           if (this.particles[i]) {
-            // Check if particle still exists
             particle.firing = true;
             particle.fireIntensity = 0.7 + Math.random() * 0.3;
           }
-        }, i * 15); // Staggered firing for wave effect
+        }, i * 10); // Faster staggered firing for wave effect
       }
     });
   }
