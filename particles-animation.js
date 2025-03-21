@@ -10,26 +10,26 @@ class ParticlesAnimation extends AnimationInterface {
     this.animationFrame = null;
 
     // Animation settings
-    this.particleCount = 300; // Even more particles since they'll be stationary
+    this.particleCount = 800; // Even more particles since they'll be stationary
     this.particleColor = 'rgba(255, 255, 255, 0.8)'; // Changed to white
     this.lineColor = 'rgba(255, 255, 255, 0.15)';
-    this.particleSize = 3;
-    this.connectionDistance = 120; // Reduced from 150 for sparser connections
-    this.speed = 0.3; // Reduced for slower movement
+    this.particleSize = 2;
+    this.connectionDistance = 90; // Reduced from 150 for sparser connections
+    this.speed = 1; // Reduced for slower movement
 
     // Neural activity simulation
-    this.synapseLifespan = 20; // Reduced from 40 to make connections disappear faster
+    this.synapseLifespan = 30; // Reduced from 40 to make connections disappear faster
     this.synapseFormationRate = 0.015; // Significantly reduced from 0.04
     this.fireRate = 0.003; // Reduced from 0.01 for less frequent firing
     this.activeConnections = []; // Track current synaptic connections
     this.burstProbability = 0.001; // Reduced from 0.002
-    this.decayRate = 0.92; // Faster decay to make activity disappear quicker
+    this.decayRate = 0.01; // Faster decay to make activity disappear quicker
 
     // Depth perception settings
-    this.depthLayers = 7; // Increased depth layers for more background
-    this.maxOpacity = 0.9; // Max opacity for closest particles
+    this.depthLayers = 10; // Increased depth layers for more background
+    this.maxOpacity = 0.8; // Max opacity for closest particles
     this.minOpacity = 0.15; // Slightly lower minimum opacity for more contrast
-    this.backgroundRatio = 0.65; // 65% of particles will be in background layers
+    this.backgroundRatio = 0.35; // 65% of particles will be in background layers
 
     // State flags for animation effects
     this.highlighted = false;
@@ -46,15 +46,19 @@ class ParticlesAnimation extends AnimationInterface {
     };
 
     // Movement behavior - increased for more visible floating
-    this.maxMovement = 0.8; // Increased from 0.3 for more noticeable movement
-    this.anchorStrength = 0.02; // Greatly reduced from 0.95 to allow more drifting
-    this.movementChangeFrequency = 0.03; // How often particles change direction
+    this.maxMovement = 0.5; // Increased from 0.3 for more noticeable movement
+    this.anchorStrength = 0.01; // Greatly reduced from 0.95 to allow more drifting
+    this.movementChangeFrequency = 0.001; // How often particles change direction
 
     // Signal activity settings
-    this.signalSpeed = 0.8; // Reduced from 1.2 for slower signals
+    this.signalSpeed = 10; // Reduced from 1.2 for slower signals
 
     // Effect timer
     this.effectTimer = null;
+
+    // Add connection opacity settings
+    this.connectedOpacity = 0.7; // 100% opacity for connected particles
+    this.disconnectedOpacity = 0.1; // 30% opacity for disconnected particles
   }
 
   initialize() {
@@ -199,6 +203,8 @@ class ParticlesAnimation extends AnimationInterface {
           depthLayer < 4 ? 1 : 0.5 - (depthLayer - 4) * 0.1,
         nextFireTime: Math.random() * 200, // Random initial time until first firing
         dendrites: [], // Will store small lines representing dendrites
+        isConnected: false, // Track if particle is connected to others
+        baseOpacity: layerOpacity, // Store the original depth-based opacity
       });
     }
 
@@ -249,6 +255,17 @@ class ParticlesAnimation extends AnimationInterface {
 
     // Draw a subtle background glow to enhance the digital brain atmosphere
     this.drawBackgroundGlow();
+
+    // Reset connection status before checking current connections
+    this.particles.forEach((particle) => {
+      particle.isConnected = false;
+    });
+
+    // Mark particles that are currently in active connections
+    this.activeConnections.forEach((conn) => {
+      conn.source.isConnected = true;
+      conn.target.isConnected = true;
+    });
 
     // Update and draw particles (neurons)
     this.particles.forEach((particle, i) => {
@@ -313,6 +330,15 @@ class ParticlesAnimation extends AnimationInterface {
       // Draw dendrites first (beneath the neuron)
       this.drawDendrites(particle);
 
+      // Adjust opacity based on connection status
+      const targetOpacity = particle.isConnected
+        ? this.connectedOpacity
+        : this.disconnectedOpacity;
+
+      // Apply the opacity (consider depth factor)
+      particle.opacity = particle.baseOpacity * targetOpacity;
+      particle.color = `rgba(255, 255, 255, ${particle.opacity})`;
+
       // Update firing state
       if (particle.firing) {
         // Draw the firing neuron (brighter)
@@ -325,7 +351,7 @@ class ParticlesAnimation extends AnimationInterface {
           Math.PI * 2,
         );
 
-        // White color with firing intensity and depth-based opacity
+        // White color with firing intensity and connection-adjusted opacity
         const fireOpacity = Math.min(
           1,
           particle.opacity + particle.fireIntensity * 0.3,
@@ -599,21 +625,21 @@ class ParticlesAnimation extends AnimationInterface {
     this.highlighted = true;
 
     // Keep connection distance similar to default, just slightly increased
-    this.connectionDistance = 140; // Only slightly increased from 120 to maintain similar connection pattern
-    this.fireRate = 0.1; // Increased firing rate for more activity
-    this.synapseFormationRate = 0.08; // More connections forming but between nearby particles
-    this.signalSpeed = 2.0; // Faster signals along existing connections
+    this.connectionDistance = 100; // Only slightly increased from 120 to maintain similar connection pattern
+    this.fireRate = 0.04; // Increased firing rate for more activity
+    this.synapseFormationRate = 0.07; // More connections forming but between nearby particles
+    this.signalSpeed = 1.0; // Faster signals along existing connections
 
     // Increase decay rate to make connections disappear faster
-    this.decayRate = 0.85; // Faster decay during effect (original is 0.92)
+    this.decayRate = 0.3; // Faster decay during effect (original is 0.92)
 
     // Smaller increase in movement for gentler effect
-    this.maxMovement = 1.2;
+    this.maxMovement = 1;
 
     // Increase brightness for more dramatic effect
     this.particles.forEach((particle) => {
       particle.originalOpacity = particle.opacity;
-      particle.opacity = Math.min(1.0, particle.opacity * 1.3);
+      particle.opacity = Math.min(1.0, particle.opacity * 1.2);
     });
 
     // Trigger gentler wave of neural activity
@@ -624,11 +650,11 @@ class ParticlesAnimation extends AnimationInterface {
       if (counter <= 2) {
         this.particles.forEach((particle, i) => {
           // Higher chance of firing for more activity but with smaller connections
-          if (Math.random() < 0.6) {
+          if (Math.random() < 0.1) {
             setTimeout(() => {
               if (this.particles[i]) {
                 particle.firing = true;
-                particle.fireIntensity = 0.8 + Math.random() * 0.3; // Slightly higher intensity
+                particle.fireIntensity = 0.8 + Math.random() * 0.1; // Slightly higher intensity
               }
             }, i % 70); // Staggered firing
           }
@@ -636,12 +662,12 @@ class ParticlesAnimation extends AnimationInterface {
       } else {
         clearInterval(waveInterval);
       }
-    }, 350);
+    }, 1000);
 
-    // Reset to normal state after 1.2 seconds
+    // Reset to normal state
     this.effectTimer = setTimeout(() => {
       this.resetToNormalState();
-    }, 1200);
+    }, 350);
   }
 
   // New method to reset animation to normal state
@@ -662,9 +688,15 @@ class ParticlesAnimation extends AnimationInterface {
     // Reset particle opacities
     this.particles.forEach((particle) => {
       if (particle.originalOpacity) {
-        particle.opacity = particle.originalOpacity;
+        particle.baseOpacity = particle.originalOpacity;
         delete particle.originalOpacity;
       }
+
+      // Apply connection status opacity
+      const targetOpacity = particle.isConnected
+        ? this.connectedOpacity
+        : this.disconnectedOpacity;
+      particle.opacity = particle.baseOpacity * targetOpacity;
     });
   }
 
