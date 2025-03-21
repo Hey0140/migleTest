@@ -52,9 +52,33 @@ document.addEventListener('DOMContentLoaded', () => {
   window.completeDetection = function () {
     statusMessage.textContent = '개체 인식 완료';
 
-    // 가이드 원과 텍스트 숨기기
-    guideCircle.style.display = 'none';
-    guideText.style.display = 'none';
+    // 가이드 원 애니메이션: 크기 증가 및 투명도 감소
+    // 원의 중심으로부터 확대되도록 명확하게 설정
+    guideCircle.style.position = 'absolute'; // 절대 위치 지정
+    guideCircle.style.left = '50%'; // 좌우 중앙
+    guideCircle.style.top = '50%'; // 상하 중앙
+    guideCircle.style.transform = 'translate(-50%, -50%)'; // 원 자체를 중앙에 위치시킴
+
+    // 애니메이션 시작 전에 초기 위치 설정을 적용하기 위한 짧은 지연
+    setTimeout(() => {
+      guideCircle.style.transformOrigin = '50% 50%'; // 정확한 중심점 설정
+      guideCircle.style.transition =
+        'transform 1s ease-out, opacity 1s ease-out'; // Match other transitions
+      guideCircle.style.transform = 'translate(-50%, -50%) scale(1.09)'; // 스케일링 시 중앙 위치 유지
+      guideCircle.style.opacity = '0';
+    }, 10);
+
+    // 애니메이션 완료 후 display none 처리
+    setTimeout(() => {
+      guideCircle.style.display = 'none';
+    }, 1010); // Match the transition duration (1s)
+
+    // 가이드 텍스트 숨기기 - add proper transition
+    guideText.style.transition = 'opacity 1s ease-out';
+    guideText.style.opacity = '0';
+    setTimeout(() => {
+      guideText.style.display = 'none';
+    }, 1000);
 
     // Dim matrix but keep it running - use the new public method
     if (window.dimMatrix) {
