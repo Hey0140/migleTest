@@ -6,7 +6,17 @@
     <title>Interactive Exhibition</title>
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* Inline style to ensure immediate application */
+      /* Base styles */
+      body {
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* ===== CAMERA SECTION STYLES ===== */
       #camera-container {
         position: relative;
         z-index: 10;
@@ -35,14 +45,20 @@
         -webkit-mask-image: radial-gradient(
           ellipse 40% 60% at center,
           black 0%,
-          black 25%,
-          transparent 55%
+          black 30%,
+          rgba(0, 0, 0, 0.8) 40%,
+          rgba(0, 0, 0, 0.5) 50%,
+          rgba(0, 0, 0, 0.2) 60%,
+          transparent 70%
         );
         mask-image: radial-gradient(
           ellipse 40% 60% at center,
           black 0%,
-          black 25%,
-          transparent 55%
+          black 20%, 
+          rgba(0, 0, 0, 0.8) 30%,
+          rgba(0, 0, 0, 0.5) 40%,
+          rgba(0, 0, 0, 0.2) 50%,
+          transparent 60%
         );
         z-index: 15;
       }
@@ -80,70 +96,34 @@
         left: 50%;
         transform: translateX(-50%);
       }
-      #matrix-background {
-        z-index: 1 !important;
-      }
-      /* Add this to ensure content sections are more visible */
-      .content-section {
-        background-color: rgba(
-          0,
-          0,
-          0,
-          0.6
-        ); /* Semi-transparent black background */
-      }
 
-      .content-section.active {
-        opacity: 1 !important;
-        visibility: visible !important;
-      }
-
-      /* Ensure matrix is behind content */
+      /* ===== MATRIX BACKGROUND STYLES ===== */
       #matrix-container {
-        z-index: 1 !important;
+        z-index: 1;
+      }
+      
+      #matrix-background {
+        z-index: 1;
       }
 
-      /* Fix z-index for content container */
+      /* ===== CONTENT CONTAINER STYLES ===== */
       .content-container {
-        z-index: 10 !important;
-      }
-
-      /* Debug styles */
-      #debug-overlay {
-        background: rgba(0, 0, 0, 0.8) !important;
-        color: #ff0 !important;
-        z-index: 10000 !important;
-      }
-
-      /* Ensure content sections are completely hidden initially */
-      .content-section {
-        display: none !important; /* Force hide initially */
-        visibility: hidden !important;
-        opacity: 0 !important;
-        z-index: -10 !important; /* Keep below all other elements */
-      }
-
-      /* Only show when explicitly activated */
-      .content-section.active {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        z-index: 30 !important;
-      }
-
-      /* Additional inline styles to ensure vertical centering */
-      .content-container {
+        position: fixed;
+        z-index: 10;
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100%;
+        width: 100%;
       }
 
       #content-wrapper {
         position: absolute;
         top: 0;
         bottom: 0;
-        margin: auto 0;
+        left: 0;
+        right: 0;
+        margin: auto;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -151,24 +131,53 @@
         align-items: center;
       }
 
+      /* ===== CONTENT SECTION STYLES ===== */
+      /* IMPORTANT: Single definition with no duplicates */
       .content-section {
+        /* Positioning */
         position: absolute;
         top: 0;
         bottom: 0;
         left: 0;
         right: 0;
         margin: auto;
+        
+        /* Display properties - initial state */
         display: none;
+        visibility: hidden;
+        opacity: 0;
+        z-index: -10;
+        
+        /* Content layout */
         flex-direction: column;
         justify-content: center;
+        
+        /* Background */
+        background-color: rgba(0, 0, 0, 0.6);
+        
+        /* Animation */
+        transition: opacity 1.2s ease-out;
+        will-change: opacity;
       }
 
-      /* Add this to force proper position */
-      body {
-        position: relative;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
+      /* Active state - single definition */
+      .content-section.active {
+        display: flex;
+        visibility: visible;
+        opacity: 1;
+        z-index: 30;
+      }
+
+      /* ===== DEBUG OVERLAY STYLES ===== */
+      #debug-overlay {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #ff0;
+        padding: 5px;
+        font-size: 12px;
+        z-index: 10000;
       }
     </style>
   </head>
@@ -333,6 +342,80 @@
           childList: true,
           characterData: true,
           subtree: true,
+        });
+      });
+
+      // Add this function to debug transitions
+      window.addEventListener('load', function() {
+        // Log when transitions complete
+        document.querySelectorAll('.content-section').forEach(section => {
+          section.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`Transition completed for section: ${section.id}, opacity: ${section.style.opacity}`);
+            }
+          });
+        });
+      });
+
+      // Add this function to debug transitions and fix any styling issues
+      window.addEventListener('load', function() {
+        // Fix content section styles
+        document.querySelectorAll('.content-section').forEach(section => {
+          // Set consistent transition for all sections
+          section.style.transition = 'opacity 1.2s ease-out';
+          
+          // Log when transitions start and complete
+          section.addEventListener('transitionstart', (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`Transition STARTED for section: ${section.id}, opacity: ${section.style.opacity}`);
+            }
+          });
+          
+          section.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`Transition COMPLETED for section: ${section.id}, opacity: ${section.style.opacity}`);
+            }
+          });
+        });
+      });
+
+      // Add enhanced debugging for transitions
+      window.addEventListener('load', function() {
+        console.log("Setting up transition debugging");
+        
+        // Fix content section styles and add debugging
+        document.querySelectorAll('.content-section').forEach(section => {
+          // Force consistent transition for all sections
+          section.style.transition = 'opacity 1.2s ease-out';
+          
+          // Log transition events
+          ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel'].forEach(eventType => {
+            section.addEventListener(eventType, (e) => {
+              if (e.propertyName === 'opacity') {
+                console.log(`${eventType.toUpperCase()} for ${section.id}, opacity: ${getComputedStyle(section).opacity}`);
+              }
+            });
+          });
+        });
+      });
+
+      // CLEAN CONSOLIDATED TRANSITION SETUP
+      // Set up all transitions once, consistently
+      console.log("Setting up section transitions...");
+      document.querySelectorAll('.content-section').forEach(section => {
+        // Clear any inline styles that might interfere
+        section.style.removeProperty('transition');
+        
+        // Apply a fresh transition property
+        section.style.transition = 'opacity 1.2s ease-out';
+        
+        // Debug: Log all transition events in one place
+        ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel'].forEach(eventType => {
+          section.addEventListener(eventType, (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`${eventType.toUpperCase()} for ${section.id}, opacity: ${getComputedStyle(section).opacity}`);
+            }
+          });
         });
       });
     </script>

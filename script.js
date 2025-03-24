@@ -33,35 +33,91 @@ document.addEventListener('DOMContentLoaded', () => {
   // Call initialization function immediately
   initializeHiddenSections();
 
-  // Function to activate a single section
+  // Function to activate a single section with improved transitions
   function activateSection(sectionId) {
     debug(`Activating section: ${sectionId}`);
 
-    // First, deactivate all sections
-    SECTIONS.forEach((id) => {
-      const section = document.getElementById(id);
-      section.classList.remove('active');
-      section.style.display = 'none';
-      section.style.opacity = '0';
-      section.style.visibility = 'hidden';
-    });
+    // Find current active section
+    const currentActiveSection = document.querySelector(
+      '.content-section.active',
+    );
+    const newSection = document.getElementById(sectionId);
 
-    // Then activate the requested section
-    const section = document.getElementById(sectionId);
-    section.classList.add('active');
+    if (!newSection) {
+      debug(`ERROR: Section with ID ${sectionId} not found!`);
+      return;
+    }
 
-    // Force apply styles to ensure it's visible and centered
+    // If there's an active section, fade it out first
+    if (currentActiveSection && currentActiveSection.id !== sectionId) {
+      debug(`Fading out section: ${currentActiveSection.id}`);
+
+      // Track whether transition was completed
+      let transitionCompleted = false;
+
+      // Listen for transition end
+      const transitionEndHandler = (e) => {
+        if (e.propertyName === 'opacity') {
+          debug(`Fade out transition completed for ${currentActiveSection.id}`);
+          transitionCompleted = true;
+          currentActiveSection.removeEventListener(
+            'transitionend',
+            transitionEndHandler,
+          );
+
+          // Now hide the section and show the new one
+          currentActiveSection.classList.remove('active');
+
+          // Show new section with fade-in
+          setTimeout(() => {
+            fadeInSection(newSection, sectionId);
+          }, 50); // Small delay to ensure proper rendering
+        }
+      };
+
+      // Add transition end listener
+      currentActiveSection.addEventListener(
+        'transitionend',
+        transitionEndHandler,
+      );
+
+      // Force reflow
+      void currentActiveSection.offsetWidth;
+
+      // Trigger the fade out
+      currentActiveSection.style.opacity = '0';
+
+      // Fallback timeout in case transition event doesn't fire
+      setTimeout(() => {
+        if (!transitionCompleted) {
+          debug(`Fallback: Fade out timeout for ${currentActiveSection.id}`);
+          currentActiveSection.removeEventListener(
+            'transitionend',
+            transitionEndHandler,
+          );
+
+          // Hide the section
+          currentActiveSection.classList.remove('active');
+
+          // Show new section
+          fadeInSection(newSection, sectionId);
+        }
+      }, 1500); // Longer than transition time as safety
+    } else {
+      // No current active section, just fade in the new one
+      fadeInSection(newSection, sectionId);
+    }
+  }
+
+  // Helper function for fading in a section
+  function fadeInSection(section, sectionId) {
+    debug(`Preparing to fade in: ${sectionId}`);
+
+    section.style.opacity = '0';
     section.style.display = 'flex';
-    section.style.opacity = '1';
     section.style.visibility = 'visible';
     section.style.zIndex = '30';
-    section.style.position = 'absolute';
-    section.style.top = '0';
-    section.style.bottom = '0';
-    section.style.left = '0';
-    section.style.right = '0';
-    section.style.margin = 'auto'; // Center vertically and horizontally
-    section.style.justifyContent = 'center'; // Center contents vertically
+    section.classList.add('active');
 
     // Special handling for details-text alignment
     if (sectionId === 'details-text') {
@@ -70,12 +126,24 @@ document.addEventListener('DOMContentLoaded', () => {
       section.style.alignItems = 'center'; // Center horizontally
     }
 
-    // Ensure centered within wrapper
-    section.style.justifyContent = 'center';
+    // Trigger the fade in (in next frame to ensure styles are applied)
+    // Use a longer delay to ensure the browser has time to apply styles
+    setTimeout(() => {
+      debug(`Fading in section: ${sectionId}`);
+      section.style.opacity = '1';
 
-    debug(`Activated section: ${sectionId}`);
+      // Log when fade-in completes
+      const fadeInComplete = (e) => {
+        if (e.propertyName === 'opacity') {
+          debug(`Fade in completed for ${sectionId}`);
+          section.removeEventListener('transitionend', fadeInComplete);
+        }
+      };
 
-    // Handle specific section initialization
+      section.addEventListener('transitionend', fadeInComplete);
+    }, 100);
+
+    // Initialize section content based on type
     switch (sectionId) {
       case 'typing-text':
         initTypingSection();
@@ -139,10 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       typeText(section, text, () => {
-        // After typing completes, wait and move to next section
+        // After typing completes, wait longer before moving to next section
+        // Increased from 2000ms to 3500ms to ensure transition is visible
         setTimeout(() => {
+          debug('Typing complete, moving to details section');
           activateSection('details-text');
-        }, 2000);
+        }, 3500);
       });
     }, 500);
   }
@@ -166,11 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
           startSurvivalCounter();
         }
 
-        // After all lines shown, wait and move to next section
+        // After all lines shown, wait longer before moving to next section
+        // Increased from 3000ms to 5000ms to ensure transition is visible
         if (index === lines.length - 1) {
           setTimeout(() => {
+            debug('Details complete, moving to scenario section');
             activateSection('scenario-section');
-          }, 3000);
+          }, 5000);
         }
       }, delay);
       delay += 800;
@@ -184,10 +256,12 @@ document.addEventListener('DOMContentLoaded', () => {
       video.play().catch((e) => console.error('Video play error:', e));
     });
 
-    // After delay, move to next section
+    // After longer delay, move to next section
+    // Increased from 5000ms to 8000ms to ensure transition is visible
     setTimeout(() => {
+      debug('Scenario complete, moving to overlay section');
       activateSection('overlay');
-    }, 5000);
+    }, 8000);
   }
 
   // Initialize overlay section
