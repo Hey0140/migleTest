@@ -1,4 +1,5 @@
 // Application Controller - Manages app flow and background animations
+
 class AppController {
   constructor() {
     // Animation controller - will be set when an animation module is loaded
