@@ -179,6 +179,59 @@
         font-size: 12px;
         z-index: 10000;
       }
+
+      #details-text {
+        width: 70%; /* Adjust width to 70% */
+        height: 100%; /* Full height */
+        overflow: hidden; /* Hide overflowing content */
+        position: relative; /* Position for scrolling */
+        text-align: left; /* Ensure all text is left-aligned */
+        font-family: monospace; /* Monospace font for DNA sequence */
+        font-size: 16px; /* Adjust font size */
+        line-height: 1.5; /* Adjust line height */
+        color: white; /* Default text color */
+        display: flex; /* Flexbox for centering */
+        flex-direction: column; /* Stack lines vertically */
+        justify-content: center; /* Center content vertically */
+        align-items: flex-start; /* Ensure all lines are left-aligned */
+        margin: 0 auto; /* Center horizontally within the parent */
+      }
+
+      #details-text.scrolling {
+        overflow: hidden; /* Prevent manual scrolling */
+      }
+
+      #details-text div {
+        position: relative; /* Ensure proper positioning */
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
+        text-align: left; /* Ensure all text inside is left-aligned */
+        width: 100%; /* Match the width of the parent */
+        margin: 0 auto; /* Center horizontally */
+      }
+
+      #details-text p {
+        text-align: left; /* Ensure all <p> elements are left-aligned */
+        margin: 0; /* Remove default margins for consistent spacing */
+        width: 70%; /* Ensure consistent width for all lines */
+      }
+
+      /* DNA sequence container styles */
+      #dna-sequence {
+        width: 100%; /* Full width */
+        height: 200px; /* Fixed height for scrolling effect */
+        overflow: hidden; /* Hide overflowing content */
+        position: relative; /* Position for child content */
+        background-color: rgba(0, 0, 0, 0.8); /* Optional: Background for better visibility */
+        color: #0f0; /* Green text for DNA sequence */
+        font-family: monospace; /* Monospace font for DNA sequence */
+        font-size: 14px; /* Adjust font size */
+        line-height: 1.5; /* Adjust line height */
+      }
+
+      #dna-sequence div {
+        position: absolute; /* Position for scrolling */
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
+      }
     </style>
   </head>
   <body>
@@ -225,11 +278,9 @@
           <p id="survival-line">
             생존 기간: <span id="survival-time">13241h 2134min</span>
           </p>
+          <p></p>
           <p id="dna-line">DNA 염기 서열:</p>
-          <p id="dna-sequence">
-            ATGCGTACGTTAGCCTAGGCTTACGGAATCCGATGCTAGGCTTGA...
-          </p>
-          <p id="load-line">로드 완료.</p>
+          <!-- Remove pre-defined #dna-sequence and #load-line -->
         </section>
 
         <section id="scenario-section" class="content-section">

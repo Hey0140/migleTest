@@ -178,34 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       const text = '당신이 올 것을 알고 있었습니다.';
 
-      function typeText(element, text, callback) {
-        let index = 0;
-        element.innerHTML = '';
-
-        // Add cursor
-        const cursor = document.createElement('span');
-        cursor.className = 'typing-cursor';
-        element.appendChild(cursor);
-
-        const interval = setInterval(() => {
-          if (index < text.length) {
-            element.insertBefore(
-              document.createTextNode(text.charAt(index)),
-              cursor,
-            );
-            index++;
-          } else {
-            clearInterval(interval);
-            setTimeout(() => {
-              if (cursor.parentNode === element) {
-                element.removeChild(cursor);
-              }
-              if (callback) callback();
-            }, 500);
-          }
-        }, 100);
-      }
-
       typeText(section, text, () => {
         // After typing completes, wait longer before moving to next section
         // Increased from 2000ms to 3500ms to ensure transition is visible
@@ -219,34 +191,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize details section
   function initDetailsSection() {
-    // Reset all lines
-    const lines = document.querySelectorAll('#details-text p');
-    lines.forEach((line) => {
-      line.classList.remove('visible');
-    });
+    const section = document.getElementById('details-text');
+    const lines = Array.from(section.querySelectorAll('p'));
+    section.innerHTML = ''; // Clear existing content
 
-    // Show each line sequentially
-    let delay = 500;
-    document.querySelectorAll('#details-text p').forEach((line, index) => {
-      setTimeout(() => {
-        line.classList.add('visible');
-
-        // If this is the survival line, start counter
-        if (line.id === 'survival-line') {
-          startSurvivalCounter();
-        }
-
-        // After all lines shown, wait longer before moving to next section
-        // Increased from 3000ms to 5000ms to ensure transition is visible
-        if (index === lines.length - 1) {
+    // Recursive function to type each line sequentially
+    function typeLine(index) {
+      if (index >= lines.length) {
+        // After all lines are typed, simulate DNA sequence discovery
+        simulateDNASequence(() => {
+          // After DNA sequence simulation, move to the next section
           setTimeout(() => {
             debug('Details complete, moving to scenario section');
             activateSection('scenario-section');
-          }, 5000);
-        }
-      }, delay);
-      delay += 800;
-    });
+          }, 3000);
+        });
+        return;
+      }
+
+      const text = lines[index].textContent;
+      const lineElement = document.createElement('p');
+      section.appendChild(lineElement);
+
+      // Handle survival-line separately due to the presence of a <span>
+      if (lines[index].id === 'survival-line') {
+        const span = lines[index].querySelector('span');
+        const spanText = span.textContent;
+        span.textContent = ''; // Clear existing span content
+
+        // Append the static part of the line
+        lineElement.textContent = '생존 기간: ';
+        lineElement.appendChild(span);
+
+        // Type the span content separately
+        typeText(span, spanText, () => {
+          typeLine(index + 1); // Proceed to the next line
+        });
+      } else {
+        // Handle regular lines
+        typeText(lineElement, text, () => {
+          typeLine(index + 1); // Proceed to the next line
+        });
+      }
+    }
+
+    // Start typing from the first line
+    typeLine(0);
   }
 
   // Initialize scenario section
@@ -381,3 +371,99 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// Function to type text one character at a time
+function typeText(element, text, callback) {
+  let index = 0;
+  element.innerHTML = ''; // Clear existing content
+
+  // Add cursor for typing effect
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  element.appendChild(cursor);
+
+  const interval = setInterval(() => {
+    if (index < text.length) {
+      element.insertBefore(document.createTextNode(text.charAt(index)), cursor);
+      index++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => {
+        if (cursor.parentNode === element) {
+          element.removeChild(cursor); // Remove cursor after typing
+        }
+        if (callback) callback();
+      }, 500);
+    }
+  }, 100); // Typing speed
+}
+
+// Function to simulate DNA sequence discovery
+function simulateDNASequence(callback) {
+  const section = document.getElementById('details-text');
+  section.classList.add('scrolling'); // Add scrolling class for styling
+
+  const contentWrapper = document.createElement('div');
+  contentWrapper.style.position = 'absolute';
+  contentWrapper.style.whiteSpace = 'pre-wrap';
+  contentWrapper.style.textAlign = 'left';
+  contentWrapper.style.width = '100%'; // Match parent width
+  contentWrapper.style.margin = '0 auto';
+  section.appendChild(contentWrapper);
+
+  // Add existing lines to the wrapper
+  const existingLines = Array.from(section.querySelectorAll('p'));
+  existingLines.forEach((line) => {
+    line.style.textAlign = 'left'; // Ensure consistent alignment
+    line.style.margin = '0'; // Remove default margins
+    contentWrapper.appendChild(line);
+  });
+
+  // Generate DNA sequence lines
+  const dnaCharacters = 'ATCG';
+  let lineCount = 0;
+  let delay = 200; // Start with a slower delay
+  const lineHeight = 12; // Fixed line height in pixels
+
+  function addDNALine() {
+    if (lineCount < 100) {
+      const newLine = Array.from({ length: 60 }, () =>
+        dnaCharacters.charAt(Math.floor(Math.random() * dnaCharacters.length)),
+      ).join('');
+      const dnaLine = document.createElement('p');
+      dnaLine.textContent = newLine;
+      dnaLine.style.textAlign = 'left'; // Ensure consistent alignment
+      dnaLine.style.margin = '0'; // Remove default margins
+      contentWrapper.appendChild(dnaLine);
+
+      // Scroll the entire content upwards
+      contentWrapper.style.transform = `translateY(-${lineCount * lineHeight}px)`;
+      lineCount++;
+
+      // Gradually speed up after the first 10 lines
+      if (lineCount === 10) {
+        delay = 50; // Increase speed
+      }
+
+      setTimeout(addDNALine, delay);
+    } else {
+      // After all lines are loaded, display "로드 완료"
+      setTimeout(() => {
+        const loadLine = document.createElement('p');
+        loadLine.id = 'load-line';
+        loadLine.textContent = '로드 완료.';
+        loadLine.style.textAlign = 'left'; // Ensure consistent alignment
+        loadLine.style.margin = '0'; // Remove default margins
+        contentWrapper.appendChild(loadLine);
+
+        section.classList.remove('scrolling'); // Remove scrolling class
+        if (callback) callback();
+      }, 500); // Delay before showing "로드 완료"
+    }
+  }
+
+  // Delay the start of DNA sequence lines by 3 seconds
+  setTimeout(() => {
+    addDNALine();
+  }, 3000);
+}
