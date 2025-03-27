@@ -6,7 +6,17 @@
     <title>Interactive Exhibition</title>
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* Inline style to ensure immediate application */
+      /* Base styles */
+      body {
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* ===== CAMERA SECTION STYLES ===== */
       #camera-container {
         position: relative;
         z-index: 10;
@@ -35,14 +45,20 @@
         -webkit-mask-image: radial-gradient(
           ellipse 40% 60% at center,
           black 0%,
-          black 25%,
-          transparent 55%
+          black 30%,
+          rgba(0, 0, 0, 0.8) 40%,
+          rgba(0, 0, 0, 0.5) 50%,
+          rgba(0, 0, 0, 0.2) 60%,
+          transparent 70%
         );
         mask-image: radial-gradient(
           ellipse 40% 60% at center,
           black 0%,
-          black 25%,
-          transparent 55%
+          black 20%, 
+          rgba(0, 0, 0, 0.8) 30%,
+          rgba(0, 0, 0, 0.5) 40%,
+          rgba(0, 0, 0, 0.2) 50%,
+          transparent 60%
         );
         z-index: 15;
       }
@@ -80,70 +96,34 @@
         left: 50%;
         transform: translateX(-50%);
       }
-      #matrix-background {
-        z-index: 1 !important;
-      }
-      /* Add this to ensure content sections are more visible */
-      .content-section {
-        background-color: rgba(
-          0,
-          0,
-          0,
-          0.6
-        ); /* Semi-transparent black background */
-      }
 
-      .content-section.active {
-        opacity: 1 !important;
-        visibility: visible !important;
-      }
-
-      /* Ensure matrix is behind content */
+      /* ===== MATRIX BACKGROUND STYLES ===== */
       #matrix-container {
-        z-index: 1 !important;
+        z-index: 1;
+      }
+      
+      #matrix-background {
+        z-index: 1;
       }
 
-      /* Fix z-index for content container */
+      /* ===== CONTENT CONTAINER STYLES ===== */
       .content-container {
-        z-index: 10 !important;
-      }
-
-      /* Debug styles */
-      #debug-overlay {
-        background: rgba(0, 0, 0, 0.8) !important;
-        color: #ff0 !important;
-        z-index: 10000 !important;
-      }
-
-      /* Ensure content sections are completely hidden initially */
-      .content-section {
-        display: none !important; /* Force hide initially */
-        visibility: hidden !important;
-        opacity: 0 !important;
-        z-index: -10 !important; /* Keep below all other elements */
-      }
-
-      /* Only show when explicitly activated */
-      .content-section.active {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        z-index: 30 !important;
-      }
-
-      /* Additional inline styles to ensure vertical centering */
-      .content-container {
+        position: fixed;
+        z-index: 10;
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100%;
+        width: 100%;
       }
 
       #content-wrapper {
         position: absolute;
         top: 0;
         bottom: 0;
-        margin: auto 0;
+        left: 0;
+        right: 0;
+        margin: auto;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -151,24 +131,106 @@
         align-items: center;
       }
 
+      /* ===== CONTENT SECTION STYLES ===== */
+      /* IMPORTANT: Single definition with no duplicates */
       .content-section {
+        /* Positioning */
         position: absolute;
         top: 0;
         bottom: 0;
         left: 0;
         right: 0;
         margin: auto;
+        
+        /* Display properties - initial state */
         display: none;
+        visibility: hidden;
+        opacity: 0;
+        z-index: -10;
+        
+        /* Content layout */
         flex-direction: column;
         justify-content: center;
+        
+        /* Background */
+        background-color: rgba(0, 0, 0, 0.6);
+        
+        /* Animation */
+        transition: opacity 1.2s ease-out;
+        will-change: opacity;
       }
 
-      /* Add this to force proper position */
-      body {
-        position: relative;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
+      /* Active state - single definition */
+      .content-section.active {
+        display: flex;
+        visibility: visible;
+        opacity: 1;
+        z-index: 30;
+      }
+
+      /* ===== DEBUG OVERLAY STYLES ===== */
+      #debug-overlay {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #ff0;
+        padding: 5px;
+        font-size: 12px;
+        z-index: 10000;
+      }
+
+      #details-text {
+        width: 70%; /* Adjust width to 70% */
+        height: 100%; /* Full height */
+        overflow: hidden; /* Hide overflowing content */
+        position: relative; /* Position for scrolling */
+        text-align: left; /* Ensure all text is left-aligned */
+        font-family: monospace; /* Monospace font for DNA sequence */
+        font-size: 16px; /* Adjust font size */
+        line-height: 1.5; /* Adjust line height */
+        color: white; /* Default text color */
+        display: flex; /* Flexbox for centering */
+        flex-direction: column; /* Stack lines vertically */
+        justify-content: center; /* Center content vertically */
+        align-items: flex-start; /* Ensure all lines are left-aligned */
+        margin: 0 auto; /* Center horizontally within the parent */
+      }
+
+      #details-text.scrolling {
+        overflow: hidden; /* Prevent manual scrolling */
+      }
+
+      #details-text div {
+        position: relative; /* Ensure proper positioning */
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
+        text-align: left; /* Ensure all text inside is left-aligned */
+        width: 100%; /* Match the width of the parent */
+        margin: 0 auto; /* Center horizontally */
+      }
+
+      #details-text p {
+        text-align: left; /* Ensure all <p> elements are left-aligned */
+        margin: 0; /* Remove default margins for consistent spacing */
+        width: 70%; /* Ensure consistent width for all lines */
+      }
+
+      /* DNA sequence container styles */
+      #dna-sequence {
+        width: 100%; /* Full width */
+        height: 200px; /* Fixed height for scrolling effect */
+        overflow: hidden; /* Hide overflowing content */
+        position: relative; /* Position for child content */
+        background-color: rgba(0, 0, 0, 0.8); /* Optional: Background for better visibility */
+        color: #0f0; /* Green text for DNA sequence */
+        font-family: monospace; /* Monospace font for DNA sequence */
+        font-size: 14px; /* Adjust font size */
+        line-height: 1.5; /* Adjust line height */
+      }
+
+      #dna-sequence div {
+        position: absolute; /* Position for scrolling */
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
       }
     </style>
   </head>
@@ -216,44 +278,56 @@
           <p id="survival-line">
             생존 기간: <span id="survival-time">13241h 2134min</span>
           </p>
+          <p></p>
           <p id="dna-line">DNA 염기 서열:</p>
-          <p id="dna-sequence">
-            ATGCGTACGTTAGCCTAGGCTTACGGAATCCGATGCTAGGCTTGA...
-          </p>
-          <p id="load-line">로드 완료.</p>
+          <!-- Remove pre-defined #dna-sequence and #load-line -->
         </section>
 
         <section id="scenario-section" class="content-section">
-          <p id="scenario-text">F123-232의 생존 시나리오 3개 확인</p>
-          <div id="video-container">
-            <div class="video-preview">
-              <video muted loop>
+          <header>
+            <h2 id="scenario-text">F123-232의 생존 시나리오 3개 확인</h2>
+          </header>
+          <div id="video-container" class="scenario-videos">
+            <div class="video-preview" data-scenario="1">
+              <video muted loop class="scenario-video">
                 <source src="videos/scenario1.mp4" type="video/mp4" />
+                <p>Your browser does not support HTML5 video.</p>
               </video>
+              <div class="video-overlay">시나리오 1</div>
             </div>
-            <div class="video-preview">
-              <video muted loop>
+            <div class="video-preview" data-scenario="2">
+              <video muted loop class="scenario-video">
                 <source src="videos/scenario2.mp4" type="video/mp4" />
+                <p>Your browser does not support HTML5 video.</p>
               </video>
+              <div class="video-overlay">시나리오 2</div>
             </div>
-            <div class="video-preview">
-              <video muted loop>
+            <div class="video-preview" data-scenario="3">
+              <video muted loop class="scenario-video"></video>
                 <source src="videos/scenario3.mp4" type="video/mp4" />
+                <p>Your browser does not support HTML5 video.</p>
               </video>
+              <div class="video-overlay">시나리오 3</div>
             </div>
           </div>
         </section>
 
         <section id="overlay" class="content-section">
-          <p id="question-text">
-            정말 또 다른 당신의 삶을 확인하실건가요?<br />
-            두려울수도, 재밌을수도, 아무렇지 않을 수도 있습니다.
-          </p>
-          <button id="play-button" disabled>재생</button>
+          <div class="question-container">
+            <p id="question-text">
+              정말 또 다른 당신의 삶을 확인하실건가요?<br />
+              두려울수도, 재밌을수도, 아무렇지 않을 수도 있습니다.
+            </p>
+            <div class="button-container">
+              <button id="play-button" disabled class="action-button">재생</button>
+            </div>
+          </div>
         </section>
 
         <section id="final-message" class="content-section">
-          <p>잠시후 준비가 완료되면 전시 공간 안으로 진입해주세요.</p>
+          <div class="message-container">
+            <p>잠시후 준비가 완료되면 전시 공간 안으로 진입해주세요.</p>
+          </div>
         </section>
       </div>
     </div>
@@ -273,8 +347,11 @@
       "
     ></div>
 
-    <script src="matrix.js"></script>
-    <script src="camera.js"></script>
+    <!-- Load scripts in proper order --> 
+    <script src="/src/app.js"></script>
+    <script src="/src/camera.js"></script>
+    <!-- Replace matrix-animation.js with particles-animation.js -->
+    <script src="/src/particles-animation.js"></script>
     <script>
       // Ensure camera stays visible
       window.addEventListener('load', function () {
@@ -318,7 +395,81 @@
           subtree: true,
         });
       });
+
+      // Add this function to debug transitions
+      window.addEventListener('load', function() {
+        // Log when transitions complete
+        document.querySelectorAll('.content-section').forEach(section => {
+          section.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`Transition completed for section: ${section.id}, opacity: ${section.style.opacity}`);
+            }
+          });
+        });
+      });
+
+      // Add this function to debug transitions and fix any styling issues
+      window.addEventListener('load', function() {
+        // Fix content section styles
+        document.querySelectorAll('.content-section').forEach(section => {
+          // Set consistent transition for all sections
+          section.style.transition = 'opacity 1.2s ease-out';
+          
+          // Log when transitions start and complete
+          section.addEventListener('transitionstart', (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`Transition STARTED for section: ${section.id}, opacity: ${section.style.opacity}`);
+            }
+          });
+          
+          section.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`Transition COMPLETED for section: ${section.id}, opacity: ${section.style.opacity}`);
+            }
+          });
+        });
+      });
+
+      // Add enhanced debugging for transitions
+      window.addEventListener('load', function() {
+        console.log("Setting up transition debugging");
+        
+        // Fix content section styles and add debugging
+        document.querySelectorAll('.content-section').forEach(section => {
+          // Force consistent transition for all sections
+          section.style.transition = 'opacity 1.2s ease-out';
+          
+          // Log transition events
+          ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel'].forEach(eventType => {
+            section.addEventListener(eventType, (e) => {
+              if (e.propertyName === 'opacity') {
+                console.log(`${eventType.toUpperCase()} for ${section.id}, opacity: ${getComputedStyle(section).opacity}`);
+              }
+            });
+          });
+        });
+      });
+
+      // CLEAN CONSOLIDATED TRANSITION SETUP
+      // Set up all transitions once, consistently
+      console.log("Setting up section transitions...");
+      document.querySelectorAll('.content-section').forEach(section => {
+        // Clear any inline styles that might interfere
+        section.style.removeProperty('transition');
+        
+        // Apply a fresh transition property
+        section.style.transition = 'opacity 1.2s ease-out';
+        
+        // Debug: Log all transition events in one place
+        ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel'].forEach(eventType => {
+          section.addEventListener(eventType, (e) => {
+            if (e.propertyName === 'opacity') {
+              console.log(`${eventType.toUpperCase()} for ${section.id}, opacity: ${getComputedStyle(section).opacity}`);
+            }
+          });
+        });
+      });
     </script>
-    <script src="script.js"></script>
+    <script src="/src/script.js"></script>
   </body>
 </html>
