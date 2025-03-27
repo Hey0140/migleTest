@@ -122,20 +122,15 @@ img {
 
 button {
   font-family: 'JetBrains Mono', Inter, system-ui, sans-serif;
-  background-color: rgba(25, 25, 28, 0.5);
+  background-color: rgba(50, 50, 50, 0.8);
   cursor: pointer;
   color: rgba(255, 255, 255, 1);
+  border: 1px solid rgba(100, 100, 100, 0.5);
 }
 
 button:hover {
-  background-image: radial-gradient(
-    farthest-corner at 77% 83%,
-    rgba(1, 197, 245, 0.5) 2%,
-    rgba(1, 126, 254, 0.5) 28%,
-    rgba(25, 25, 28, 0) 70%
-  );
-  border: 1px solid rgba(76, 166, 255, 0.2);
-  background-clip: padding-box;
+  background-color: rgba(70, 70, 70, 0.9);
+  border-color: rgba(150, 150, 150, 0.7);
 }
 
 .technologies {
