@@ -262,34 +262,49 @@ button:hover {
 
 /* Entity Grid Styles */
 .grid-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  width: 80%;
-  max-width: 1200px;
+  position: relative;
+  width: 90%;
+  max-width: 1400px;
+  height: 200px;
   margin: 0 auto;
-  padding: 20px;
+  overflow: hidden;
+  padding: 20px 0;
+}
+
+.grid-scroll {
+  display: flex;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  transition:
+    transform 0.5s ease-out,
+    opacity 0.8s ease-in;
+  opacity: 0; /* Start hidden */
 }
 
 .grid-item {
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  padding: 8px;
+  padding: 10px 15px;
+  margin: 0 5px;
   border: 1px solid rgba(100, 100, 100, 0.5);
   background-color: rgba(20, 20, 20, 0.8);
   border-radius: 4px;
   text-align: center;
   opacity: 0.6;
+  flex-shrink: 0;
   transition: all 0.3s ease;
 }
 
 .grid-item.highlight {
   color: #00ff00;
   border-color: #00ff00;
+  border-width: 2px;
   background-color: rgba(0, 20, 0, 0.8);
-  transform: scale(1.1);
   opacity: 1;
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
   z-index: 2;
 }
 
@@ -315,4 +330,9 @@ button:hover {
 
 .scanning {
   animation: scanning 1.5s ease-in-out;
+}
+
+/* Center line indicator */
+.center-line {
+  display: none;
 }
