@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Define sections in sequence
   const SECTIONS = [
     'typing-text',
+    'entity-grid', // Add new section to the flow
     'details-text',
     'scenario-section',
     'overlay',
@@ -148,6 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'typing-text':
         initTypingSection();
         break;
+      case 'entity-grid':
+        initEntityGridSection();
+        break;
       case 'details-text':
         initDetailsSection();
         break;
@@ -179,14 +183,130 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = '당신이 올 것을 알고 있었습니다.';
 
       typeText(section, text, () => {
-        // After typing completes, wait longer before moving to next section
-        // Increased from 2000ms to 3500ms to ensure transition is visible
+        // After typing completes, move to the entity grid section instead of details
         setTimeout(() => {
-          debug('Typing complete, moving to details section');
-          activateSection('details-text');
-        }, 3500);
+          debug('Typing complete, moving to entity grid section');
+          activateSection('entity-grid');
+        }, 2000);
       });
     }, 500);
+  }
+
+  // Initialize entity grid section
+  function initEntityGridSection() {
+    const section = document.getElementById('entity-grid');
+    const gridContainer = section.querySelector('.grid-container');
+    gridContainer.innerHTML = ''; // Clear any existing content
+
+    // Generate a large number of entity IDs
+    const totalEntities = 100;
+    const targetIndex = Math.floor(Math.random() * totalEntities);
+    const targetId = 'F123-232';
+
+    // Create grid items
+    for (let i = 0; i < totalEntities; i++) {
+      const item = document.createElement('div');
+      item.className = 'grid-item';
+
+      // Generate different IDs, but make sure one is the target
+      if (i === targetIndex) {
+        item.textContent = targetId;
+        item.dataset.isTarget = 'true';
+      } else {
+        // Generate random IDs with similar pattern
+        const prefix = 'F';
+        const mid = Math.floor(Math.random() * 999)
+          .toString()
+          .padStart(3, '0');
+        const suffix = Math.floor(Math.random() * 999)
+          .toString()
+          .padStart(3, '0');
+        item.textContent = `${prefix}${mid}-${suffix}`;
+      }
+
+      gridContainer.appendChild(item);
+    }
+
+    // Start scanning animation
+    simulateScanning(() => {
+      // Highlight target and then move to the next section
+      highlightTarget(() => {
+        setTimeout(() => {
+          debug('Entity grid complete, moving to details section');
+          activateSection('details-text');
+        }, 2000);
+      });
+    });
+  }
+
+  // Function to simulate scanning animation
+  function simulateScanning(callback) {
+    const gridItems = document.querySelectorAll('.grid-item');
+    let currentIndex = 0;
+    const scanDelay = 50; // Time between scanning each item
+
+    const scanNextItem = () => {
+      if (currentIndex < gridItems.length) {
+        gridItems[currentIndex].classList.add('scanning');
+
+        setTimeout(() => {
+          gridItems[currentIndex].classList.remove('scanning');
+          currentIndex++;
+          scanNextItem();
+        }, scanDelay);
+      } else {
+        // Scanning complete
+        if (callback) callback();
+      }
+    };
+
+    // Start scanning after a short delay
+    setTimeout(() => {
+      scanNextItem();
+    }, 1000);
+  }
+
+  // Function to highlight the target item
+  function highlightTarget(callback) {
+    const targetItem = document.querySelector(
+      '.grid-item[data-is-target="true"]',
+    );
+    const otherItems = document.querySelectorAll(
+      '.grid-item:not([data-is-target="true"])',
+    );
+
+    // Add target class for additional styling
+    targetItem.classList.add('target');
+
+    // Fade other items
+    otherItems.forEach((item) => {
+      item.classList.add('fade');
+    });
+
+    // Highlight target after a short delay
+    setTimeout(() => {
+      targetItem.classList.add('highlight');
+      // Flash effect
+      let flashCount = 0;
+      const maxFlashes = 3;
+
+      const flashInterval = setInterval(() => {
+        targetItem.classList.toggle('highlight');
+
+        setTimeout(() => {
+          targetItem.classList.toggle('highlight');
+          flashCount++;
+
+          if (flashCount >= maxFlashes) {
+            clearInterval(flashInterval);
+            targetItem.classList.add('highlight');
+
+            // Complete highlighting
+            if (callback) callback();
+          }
+        }, 200);
+      }, 600);
+    }, 1000);
   }
 
   // Initialize details section

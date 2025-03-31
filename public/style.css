@@ -259,3 +259,60 @@ button:hover {
   padding: 20px;
   border-radius: 10px;
 }
+
+/* Entity Grid Styles */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.grid-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  padding: 8px;
+  border: 1px solid rgba(100, 100, 100, 0.5);
+  background-color: rgba(20, 20, 20, 0.8);
+  border-radius: 4px;
+  text-align: center;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.grid-item.highlight {
+  color: #00ff00;
+  border-color: #00ff00;
+  background-color: rgba(0, 20, 0, 0.8);
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  z-index: 2;
+}
+
+.grid-item.fade {
+  opacity: 0.2;
+}
+
+.grid-item.target {
+  font-weight: bold;
+}
+
+@keyframes scanning {
+  0% {
+    background-color: rgba(20, 20, 20, 0.8);
+  }
+  50% {
+    background-color: rgba(0, 100, 0, 0.3);
+  }
+  100% {
+    background-color: rgba(20, 20, 20, 0.8);
+  }
+}
+
+.scanning {
+  animation: scanning 1.5s ease-in-out;
+}
