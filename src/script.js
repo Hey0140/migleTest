@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Define sections in sequence
   const SECTIONS = [
     'typing-text',
+    'entity-grid', // Add new section to the flow
     'details-text',
     'scenario-section',
     'overlay',
@@ -148,6 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'typing-text':
         initTypingSection();
         break;
+      case 'entity-grid':
+        initEntityGridSection();
+        break;
       case 'details-text':
         initDetailsSection();
         break;
@@ -179,14 +183,181 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = '당신이 올 것을 알고 있었습니다.';
 
       typeText(section, text, () => {
-        // After typing completes, wait longer before moving to next section
-        // Increased from 2000ms to 3500ms to ensure transition is visible
+        // After typing completes, move to the entity grid section instead of details
         setTimeout(() => {
-          debug('Typing complete, moving to details section');
-          activateSection('details-text');
-        }, 3500);
+          debug('Typing complete, moving to entity grid section');
+          activateSection('entity-grid');
+        }, 2000);
       });
     }, 500);
+  }
+
+  // Initialize entity grid section
+  function initEntityGridSection() {
+    const section = document.getElementById('entity-grid');
+    const gridContainer = section.querySelector('.grid-container');
+    const gridScroll = section.querySelector('.grid-scroll');
+
+    gridScroll.innerHTML = ''; // Clear any existing content
+
+    // Generate a large number of entity IDs to simulate infinity
+    const totalEntities = 300; // Much larger number
+    const targetIndex = Math.floor(totalEntities * 0.7); // Position target at 70% through the list
+    const targetId = 'F123-232';
+
+    // Create grid items
+    for (let i = 0; i < totalEntities; i++) {
+      const item = document.createElement('div');
+      item.className = 'grid-item';
+
+      // Generate different IDs, but make sure one is the target
+      if (i === targetIndex) {
+        item.textContent = targetId;
+        item.dataset.isTarget = 'true';
+        item.id = 'target-entity';
+      } else {
+        // Generate random IDs with similar pattern
+        const prefix = 'F';
+        const mid = Math.floor(Math.random() * 999)
+          .toString()
+          .padStart(3, '0');
+        const suffix = Math.floor(Math.random() * 999)
+          .toString()
+          .padStart(3, '0');
+        item.textContent = `${prefix}${mid}-${suffix}`;
+      }
+
+      gridScroll.appendChild(item);
+    }
+
+    // Start the scrolling animation
+    setTimeout(() => {
+      scrollToTarget(() => {
+        // After scrolling completes, highlight target and then move to the next section
+        highlightTargetEntity(() => {
+          setTimeout(() => {
+            debug('Entity grid complete, moving to details section');
+            activateSection('details-text');
+          }, 2000);
+        });
+      });
+    }, 1000);
+  }
+
+  // Function to scroll the grid to the target
+  function scrollToTarget(callback) {
+    const gridScroll = document.querySelector('.grid-scroll');
+    const targetItem = document.getElementById('target-entity');
+
+    if (!targetItem || !gridScroll) {
+      debug('Error: Target item or grid scroll container not found');
+      if (callback) callback();
+      return;
+    }
+
+    // Initial position - far left (negative offset)
+    let initialPosition = window.innerWidth;
+    gridScroll.style.transform = `translateX(${initialPosition}px)`;
+    gridScroll.style.opacity = '0'; // Ensure starting with opacity 0
+
+    // Calculate the target position to center the target item
+    const targetRect = targetItem.getBoundingClientRect();
+    const containerRect = document
+      .querySelector('.grid-container')
+      .getBoundingClientRect();
+    const targetOffset = targetRect.left + targetRect.width / 2;
+    const containerCenter = containerRect.left + containerRect.width / 2;
+    const finalPosition = containerCenter - targetOffset;
+
+    // Animation properties
+    const startTime = performance.now();
+    const duration = 5000; // 5 seconds for the full animation
+
+    // Force a reflow to ensure the initial state is applied before animation starts
+    void gridScroll.offsetWidth;
+
+    // Start fade in right away, but slower than the scroll
+    setTimeout(() => {
+      gridScroll.style.opacity = '1';
+    }, 100);
+
+    // Animation function
+    function animateScroll(currentTime) {
+      const elapsed = currentTime - startTime;
+      let progress = Math.min(elapsed / duration, 1);
+
+      // Easing function for gradually slowing down
+      // Start fast then slow down exponentially as we approach the end
+      progress = Math.pow(progress, 0.3); // Adjust power to control deceleration
+
+      // Calculate current position
+      const currentPosition =
+        initialPosition - (initialPosition - finalPosition) * progress;
+      gridScroll.style.transform = `translateX(${currentPosition}px)`;
+
+      // Continue animation until complete
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      } else {
+        // Add a little bounce effect at the end
+        gridScroll.style.transition = 'transform 0.3s ease-out';
+        gridScroll.style.transform = `translateX(${finalPosition}px)`;
+
+        setTimeout(() => {
+          if (callback) callback();
+        }, 500); // Wait for bounce to complete
+      }
+    }
+
+    // Start the animation
+    requestAnimationFrame(animateScroll);
+  }
+
+  // Function to highlight the target item with enhanced effect
+  function highlightTargetEntity(callback) {
+    const targetItem = document.getElementById('target-entity');
+    const otherItems = document.querySelectorAll(
+      '.grid-item:not([data-is-target="true"])',
+    );
+
+    // Add target class for additional styling
+    targetItem.classList.add('target');
+
+    // Fade other items
+    otherItems.forEach((item) => {
+      item.classList.add('fade');
+    });
+
+    // Highlight target after a short delay - simplified animation
+    setTimeout(() => {
+      targetItem.classList.add('highlight');
+
+      // Simple pulse effect using opacity and border
+      let pulseCount = 0;
+      const maxPulses = 3;
+
+      const pulseInterval = setInterval(() => {
+        // Toggle border brightness
+        if (targetItem.style.borderColor === 'rgba(0, 255, 0, 1)') {
+          targetItem.style.borderColor = 'rgba(0, 255, 0, 0.5)';
+          targetItem.style.boxShadow = '0 0 5px rgba(0, 255, 0, 0.3)';
+        } else {
+          targetItem.style.borderColor = 'rgba(0, 255, 0, 1)';
+          targetItem.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.5)';
+        }
+
+        pulseCount++;
+
+        if (pulseCount >= maxPulses) {
+          clearInterval(pulseInterval);
+          targetItem.style.borderColor = '#00ff00';
+          targetItem.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.5)';
+
+          // Complete highlighting
+          if (callback) callback();
+        }
+      }, 300);
+    }, 800);
   }
 
   // Initialize details section
