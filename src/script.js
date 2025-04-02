@@ -7,6 +7,33 @@ document.addEventListener('DOMContentLoaded', () => {
     debugElement.textContent = message;
   }
 
+  // 전역에 위치
+  let CURRENT_RANDOM_ID = null;
+  function updateAllRandomIdTexts() {
+    if (!CURRENT_RANDOM_ID) return;
+
+    // 고유 식별코드 라인
+    const codeLine = document.getElementById('code-line');
+    if (codeLine) {
+      codeLine.textContent = `고유 식별코드: ${CURRENT_RANDOM_ID}`;
+    }
+
+    // 시나리오 제목
+    const scenarioText = document.getElementById('scenario-text');
+    if (scenarioText) {
+      scenarioText.textContent = `${CURRENT_RANDOM_ID}의 생존 시나리오 3개 확인`;
+    }
+
+    // 질문 영역
+    const questionText = document.getElementById('question-text');
+    if (questionText) {
+      questionText.innerHTML = `${CURRENT_RANDOM_ID},<br />
+    정말 또 다른 당신의 삶을 확인하실건가요?<br />
+    두려울수도, 재밌을수도, 아무렇지 않을 수도 있습니다.`;
+    }
+  }
+
+
   // Define sections in sequence
   const SECTIONS = [
     'typing-text',
@@ -192,6 +219,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   }
 
+  function generateRandomId() {
+    const pad = (num) => String(num).padStart(3, '0');
+    const first = pad(Math.floor(Math.random() * 1000));
+    const second = pad(Math.floor(Math.random() * 1000));
+    return `F${first}-${second}`;
+  }
+
+
   // Initialize entity grid section
   function initEntityGridSection() {
     const section = document.getElementById('entity-grid');
@@ -203,7 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate a large number of entity IDs to simulate infinity
     const totalEntities = 300; // Much larger number
     const targetIndex = Math.floor(totalEntities * 0.7); // Position target at 70% through the list
-    const targetId = 'F123-232';
+    const targetId = generateRandomId();
+    CURRENT_RANDOM_ID = targetId;
+    updateAllRandomIdTexts();
 
     // Create grid items
     for (let i = 0; i < totalEntities; i++) {
