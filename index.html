@@ -54,7 +54,7 @@
         mask-image: radial-gradient(
           ellipse 40% 60% at center,
           black 0%,
-          black 20%, 
+          black 20%,
           rgba(0, 0, 0, 0.8) 30%,
           rgba(0, 0, 0, 0.5) 40%,
           rgba(0, 0, 0, 0.2) 50%,
@@ -101,7 +101,7 @@
       #matrix-container {
         z-index: 1;
       }
-      
+
       #matrix-background {
         z-index: 1;
       }
@@ -141,20 +141,20 @@
         left: 0;
         right: 0;
         margin: auto;
-        
+
         /* Display properties - initial state */
         display: none;
         visibility: hidden;
         opacity: 0;
         z-index: -10;
-        
+
         /* Content layout */
         flex-direction: column;
         justify-content: center;
-        
+
         /* Background */
         background-color: rgba(0, 0, 0, 0.6);
-        
+
         /* Animation */
         transition: opacity 1.2s ease-out;
         will-change: opacity;
@@ -185,7 +185,7 @@
         height: 100%; /* Full height */
         overflow: hidden; /* Hide overflowing content */
         position: relative; /* Position for scrolling */
-        text-align: left; /* Ensure all text is left-aligned */
+        text-align: center; /* Ensure all text is left-aligned */
         font-family: monospace; /* Monospace font for DNA sequence */
         font-size: 16px; /* Adjust font size */
         line-height: 1.5; /* Adjust line height */
@@ -193,7 +193,7 @@
         display: flex; /* Flexbox for centering */
         flex-direction: column; /* Stack lines vertically */
         justify-content: center; /* Center content vertically */
-        align-items: flex-start; /* Ensure all lines are left-aligned */
+        align-items: center; /* Ensure all lines are left-aligned */
         margin: 0 auto; /* Center horizontally within the parent */
       }
 
@@ -204,13 +204,13 @@
       #details-text div {
         position: relative; /* Ensure proper positioning */
         white-space: pre-wrap; /* Preserve whitespace and line breaks */
-        text-align: left; /* Ensure all text inside is left-aligned */
+        text-align: center; /* Ensure all text inside is left-aligned */
         width: 100%; /* Match the width of the parent */
         margin: 0 auto; /* Center horizontally */
       }
 
       #details-text p {
-        text-align: left; /* Ensure all <p> elements are left-aligned */
+        text-align: center; /* Ensure all <p> elements are left-aligned */
         margin: 0; /* Remove default margins for consistent spacing */
         /* width: 70%; */
       }
@@ -282,7 +282,7 @@
         </section>
 
         <section id="details-text" class="content-section">
-          <p id="code-line">고유 식별코드: {CUR}</p>
+          <p id="code-line">고유 식별코드: </p>
           <p id="object-line">물체 정보: 유기체.</p>
           <p id="survival-line">
             생존 기간: <span id="survival-time">13241h 2134min</span>
@@ -357,7 +357,7 @@
       "
     ></div>
 
-    <!-- Load scripts in proper order --> 
+    <!-- Load scripts in proper order -->
     <script src="/src/app.js"></script>
     <script src="/src/camera.js"></script>
     <!-- Replace matrix-animation.js with particles-animation.js -->
@@ -424,14 +424,14 @@
         document.querySelectorAll('.content-section').forEach(section => {
           // Set consistent transition for all sections
           section.style.transition = 'opacity 1.2s ease-out';
-          
+
           // Log when transitions start and complete
           section.addEventListener('transitionstart', (e) => {
             if (e.propertyName === 'opacity') {
               console.log(`Transition STARTED for section: ${section.id}, opacity: ${section.style.opacity}`);
             }
           });
-          
+
           section.addEventListener('transitionend', (e) => {
             if (e.propertyName === 'opacity') {
               console.log(`Transition COMPLETED for section: ${section.id}, opacity: ${section.style.opacity}`);
@@ -443,12 +443,12 @@
       // Add enhanced debugging for transitions
       window.addEventListener('load', function() {
         console.log("Setting up transition debugging");
-        
+
         // Fix content section styles and add debugging
         document.querySelectorAll('.content-section').forEach(section => {
           // Force consistent transition for all sections
           section.style.transition = 'opacity 1.2s ease-out';
-          
+
           // Log transition events
           ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel'].forEach(eventType => {
             section.addEventListener(eventType, (e) => {
@@ -466,10 +466,10 @@
       document.querySelectorAll('.content-section').forEach(section => {
         // Clear any inline styles that might interfere
         section.style.removeProperty('transition');
-        
+
         // Apply a fresh transition property
         section.style.transition = 'opacity 1.2s ease-out';
-        
+
         // Debug: Log all transition events in one place
         ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel'].forEach(eventType => {
           section.addEventListener(eventType, (e) => {
