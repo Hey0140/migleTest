@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     // Add refresh functionality when 'r' key is pressed
-    else if (event.key === 'r' || event.key === 'R') {
+    else if (event.key === 'r' || event.key === 'R' || event.key === 'ㄱ') {
       debug('Refreshing page...');
       window.location.reload();
     }
