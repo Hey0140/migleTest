@@ -540,6 +540,11 @@ document.addEventListener('DOMContentLoaded', () => {
         activateSection(SECTIONS[index]);
       }
     }
+    // Add refresh functionality when 'r' key is pressed
+    else if (event.key === 'r' || event.key === 'R') {
+      debug('Refreshing page...');
+      window.location.reload();
+    }
   });
 });
 
